@@ -112,7 +112,7 @@ actor OpenAIService {
     static let shared = OpenAIService()
 
     private let baseURL = "https://api.openai.com/v1/responses"
-    private let model = "gpt-4o-mini"
+    private let model = "o3"
 
     private var apiKey: String? {
         let key = UserSettings.openAIAPIKey

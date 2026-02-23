@@ -64,6 +64,9 @@ GoogleService-Info.plist
 .env
 .env.*
 
+# Large ML model files
+*.gguf
+
 # Xcode previews
 .previews/
 
