@@ -5,6 +5,7 @@ struct CameraView: View {
     @StateObject private var viewModel = CameraViewModel()
     @StateObject private var analysisViewModel = AnalysisViewModel()
     @State private var showingAnalysis = false
+    @State private var showingError = false
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,9 @@ struct CameraView: View {
                     await viewModel.loadSelectedPhoto()
                 }
             }
+            .onChange(of: viewModel.errorMessage) { _, newValue in
+                showingError = newValue != nil
+            }
             .navigationDestination(isPresented: $showingAnalysis) {
                 if let image = viewModel.capturedImage {
                     AnalysisView(
@@ -46,7 +50,7 @@ struct CameraView: View {
                     )
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert("Error", isPresented: $showingError) {
                 Button("OK") {
                     viewModel.errorMessage = nil
                 }
@@ -64,6 +68,7 @@ struct CameraView: View {
                 .frame(maxHeight: 350)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .shadow(radius: 5)
+                .accessibilityLabel("Captured food photo")
 
             HStack(spacing: 16) {
                 Button {
@@ -73,6 +78,7 @@ struct CameraView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel("Retake photo")
 
                 Button {
                     showingAnalysis = true
@@ -85,6 +91,7 @@ struct CameraView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
+                .accessibilityLabel("Analyze food for calories")
             }
         }
     }
@@ -94,6 +101,7 @@ struct CameraView: View {
             Image(systemName: "fork.knife.circle.fill")
                 .font(.system(size: 80))
                 .foregroundStyle(.green.opacity(0.7))
+                .accessibilityHidden(true)
 
             Text("Capture or select a food image")
                 .font(.headline)
@@ -117,6 +125,7 @@ struct CameraView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.green)
+            .accessibilityLabel("Open camera to take a photo")
 
             Button {
                 viewModel.openPhotoPicker()
@@ -126,6 +135,7 @@ struct CameraView: View {
                     .padding(.vertical, 12)
             }
             .buttonStyle(.bordered)
+            .accessibilityLabel("Choose photo from library")
         }
     }
 }

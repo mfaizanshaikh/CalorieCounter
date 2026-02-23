@@ -6,10 +6,12 @@ struct SettingsView: View {
     @ObservedObject private var settings = UserSettings.shared
     @Environment(\.modelContext) private var modelContext
     @State private var showingClearDataAlert = false
+    @State private var showingRemoveKeyAlert = false
 
     var body: some View {
         NavigationStack {
             Form {
+                apiKeySection
                 calorieGoalSection
                 displaySection
                 dataSection
@@ -23,6 +25,66 @@ struct SettingsView: View {
                 }
             } message: {
                 Text("This will permanently delete all your meal entries. This action cannot be undone.")
+            }
+            .alert("Remove API Key", isPresented: $showingRemoveKeyAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Remove", role: .destructive) {
+                    viewModel.removeAPIKey()
+                }
+            } message: {
+                Text("This will remove your OpenAI API key. Food analysis will be unavailable until you add a new key.")
+            }
+        }
+    }
+
+    // MARK: - API Key Section
+    private var apiKeySection: some View {
+        Section {
+            if viewModel.hasAPIKey {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("API Key Configured")
+                            .font(.body)
+                        Text(viewModel.maskedAPIKey)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button("Remove") {
+                        showingRemoveKeyAlert = true
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .accessibilityLabel("Remove OpenAI API key")
+                }
+            } else {
+                HStack {
+                    SecureField("Paste your OpenAI key (sk-...)", text: $viewModel.apiKeyInput)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .accessibilityLabel("OpenAI API key input")
+
+                    Button("Save") {
+                        viewModel.saveAPIKey()
+                    }
+                    .disabled(viewModel.apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityLabel("Save API key")
+                }
+            }
+        } header: {
+            Text("OpenAI API Key")
+        } footer: {
+            if viewModel.hasAPIKey {
+                Text("Your API key is stored securely in the device Keychain and is never shared.")
+            } else {
+                Text("Required for AI food analysis. Get your key at platform.openai.com. Stored securely in the device Keychain.")
             }
         }
     }
@@ -48,8 +110,9 @@ struct SettingsView: View {
                     step: 50
                 )
                 .tint(.green)
+                .accessibilityLabel("Daily calorie goal slider")
+                .accessibilityValue("\(settings.dailyCalorieGoal) calories")
 
-                // Quick presets
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Quick Presets")
                         .font(.subheadline)
@@ -79,6 +142,8 @@ struct SettingsView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("\(preset.name), \(preset.calories) calories")
+                            .accessibilityAddTraits(settings.dailyCalorieGoal == preset.calories ? .isSelected : [])
                         }
                     }
                 }
@@ -95,6 +160,7 @@ struct SettingsView: View {
     private var displaySection: some View {
         Section {
             Toggle("Show Calorie Range", isOn: $settings.showCalorieRange)
+                .accessibilityLabel("Show calorie range toggle")
         } header: {
             Text("Display")
         } footer: {
@@ -110,9 +176,12 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "trash")
+                        .accessibilityHidden(true)
                     Text("Clear All Meal Data")
                 }
             }
+            .accessibilityLabel("Clear all meal data")
+            .accessibilityHint("Permanently deletes all meal entries")
         } header: {
             Text("Data")
         }
@@ -138,7 +207,9 @@ struct SettingsView: View {
             try modelContext.delete(model: MealEntry.self)
             try modelContext.delete(model: FoodItem.self)
         } catch {
+#if DEBUG
             print("Failed to clear data: \(error)")
+#endif
         }
     }
 }

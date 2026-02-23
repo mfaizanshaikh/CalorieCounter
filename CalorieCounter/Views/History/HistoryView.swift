@@ -141,6 +141,8 @@ struct MealEntryRow: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(entry.mealType.rawValue), \(foodSummary), \(entry.totalCaloriesAvg) calories, \(entry.date.shortTime)")
     }
 
     private var foodSummary: String {

@@ -5,6 +5,7 @@ import Charts
 struct DashboardView: View {
     @Query(sort: \MealEntry.date, order: .reverse) private var entries: [MealEntry]
     @StateObject private var viewModel = DashboardViewModel()
+    @ScaledMetric private var caloriesFontSize: CGFloat = 56
 
     var body: some View {
         NavigationStack {
@@ -46,8 +47,9 @@ struct DashboardView: View {
 
             VStack(spacing: 8) {
                 Text("\(viewModel.todayCalories.avg)")
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .font(.system(size: caloriesFontSize, weight: .bold, design: .rounded))
                     .foregroundStyle(.green)
+                    .accessibilityLabel("\(viewModel.todayCalories.avg) calories consumed today")
 
                 Text("calories consumed")
                     .font(.subheadline)
@@ -196,6 +198,7 @@ struct MealTypeRow: View {
             Image(systemName: mealType.icon)
                 .foregroundStyle(.green)
                 .frame(width: 24)
+                .accessibilityHidden(true)
 
             Text(mealType.rawValue)
                 .font(.subheadline)
@@ -213,12 +216,15 @@ struct MealTypeRow: View {
                 }
             }
             .frame(width: 100, height: 8)
+            .accessibilityHidden(true)
 
             Text("\(calories)")
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .frame(width: 50, alignment: .trailing)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(mealType.rawValue): \(calories) calories average")
     }
 }
 
@@ -234,6 +240,7 @@ struct StatCard: View {
             HStack {
                 Image(systemName: icon)
                     .foregroundStyle(color)
+                    .accessibilityHidden(true)
 
                 Spacer()
             }
@@ -253,6 +260,8 @@ struct StatCard: View {
         .padding()
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(value) \(unit)")
     }
 }
 

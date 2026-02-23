@@ -53,7 +53,9 @@ class HistoryViewModel: ObservableObject {
         do {
             try modelContext.save()
         } catch {
+#if DEBUG
             print("Failed to delete entry: \(error)")
+#endif
         }
     }
 }

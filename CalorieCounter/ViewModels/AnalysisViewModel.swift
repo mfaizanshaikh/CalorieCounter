@@ -100,6 +100,9 @@ class AnalysisViewModel: ObservableObject {
             userEditedTotalCalories = editableFoods.reduce(0) { $0 + $1.originalAvg }
         } catch {
             errorMessage = error.localizedDescription
+#if DEBUG
+            print("Analysis error: \(error)")
+#endif
         }
 
         isAnalyzing = false
@@ -157,6 +160,9 @@ class AnalysisViewModel: ObservableObject {
             return entry
         } catch {
             errorMessage = "Failed to save meal: \(error.localizedDescription)"
+#if DEBUG
+            print("Save error: \(error)")
+#endif
             return nil
         }
     }

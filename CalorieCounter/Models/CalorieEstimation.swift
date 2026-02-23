@@ -126,7 +126,9 @@ extension CalorieEstimation {
         do {
             return try decoder.decode(CalorieEstimation.self, from: data)
         } catch {
+#if DEBUG
             print("Failed to parse CalorieEstimation: \(error)")
+#endif
             // Try with original string as fallback
             if let originalData = jsonString.data(using: .utf8) {
                 return try? decoder.decode(CalorieEstimation.self, from: originalData)

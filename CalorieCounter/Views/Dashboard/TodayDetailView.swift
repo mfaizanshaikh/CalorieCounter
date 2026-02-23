@@ -5,6 +5,7 @@ struct TodayDetailView: View {
     @Query(sort: \MealEntry.date, order: .reverse) private var allEntries: [MealEntry]
     @StateObject private var viewModel = DashboardViewModel()
     @Environment(\.modelContext) private var modelContext
+    @ScaledMetric private var caloriesFontSize: CGFloat = 64
 
     private var todayEntries: [MealEntry] {
         allEntries.filter { $0.date.isToday }
@@ -34,8 +35,9 @@ struct TodayDetailView: View {
         VStack(spacing: 16) {
             VStack(spacing: 8) {
                 Text("\(viewModel.todayCalories.avg)")
-                    .font(.system(size: 64, weight: .bold, design: .rounded))
+                    .font(.system(size: caloriesFontSize, weight: .bold, design: .rounded))
                     .foregroundStyle(.green)
+                    .accessibilityLabel("\(viewModel.todayCalories.avg) calories consumed today")
 
                 Text("calories consumed")
                     .font(.subheadline)

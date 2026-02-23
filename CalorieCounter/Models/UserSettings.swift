@@ -3,27 +3,49 @@ import Foundation
 class UserSettings: ObservableObject {
     static let shared = UserSettings()
 
-    // MARK: - OpenAI API Key Configuration
-    // Set your OpenAI API key here
-    static let openAIAPIKey = "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"
+    // MARK: - Keychain Key
+    private static let apiKeyKeychainKey = "openai_api_key"
+
+    // Static accessor used by services
+    static var openAIAPIKey: String {
+        shared.apiKey
+    }
 
     private let defaults = UserDefaults.standard
 
-    // Keys
+    // MARK: - UserDefaults Keys
     private enum Keys {
         static let dailyCalorieGoal = "daily_calorie_goal"
         static let showCalorieRange = "show_calorie_range"
-        static let defaultMealTypeOverride = "default_meal_type_override"
         static let hasCompletedOnboarding = "has_completed_onboarding"
     }
 
-    // MARK: - API Key
+    // MARK: - API Key (Keychain-backed)
+
     var apiKey: String {
-        Self.openAIAPIKey
+        KeychainHelper.load(for: Self.apiKeyKeychainKey) ?? ""
     }
 
     var hasAPIKey: Bool {
-        !apiKey.isEmpty && apiKey != "YOUR_OPENAI_API_KEY_HERE"
+        let key = apiKey
+        return !key.isEmpty && key.hasPrefix("sk-")
+    }
+
+    var maskedAPIKey: String {
+        let key = apiKey
+        guard key.count > 8 else { return "Configured" }
+        return "sk-...●●●●\(key.suffix(4))"
+    }
+
+    func saveAPIKey(_ key: String) {
+        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        KeychainHelper.save(trimmed, for: Self.apiKeyKeychainKey)
+        objectWillChange.send()
+    }
+
+    func deleteAPIKey() {
+        KeychainHelper.delete(for: Self.apiKeyKeychainKey)
+        objectWillChange.send()
     }
 
     // MARK: - Daily Calorie Goal
@@ -48,7 +70,6 @@ class UserSettings: ObservableObject {
     }
 
     private init() {
-        // Load saved values or defaults
         self.dailyCalorieGoal = defaults.object(forKey: Keys.dailyCalorieGoal) as? Int ?? 2000
         self.showCalorieRange = defaults.object(forKey: Keys.showCalorieRange) as? Bool ?? true
         self.hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)

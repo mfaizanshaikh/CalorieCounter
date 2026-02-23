@@ -6,6 +6,7 @@ struct MealDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteConfirmation = false
+    @ScaledMetric private var caloriesFontSize: CGFloat = 36
 
     var body: some View {
         ScrollView {
@@ -76,8 +77,9 @@ struct MealDetailView: View {
                         .foregroundStyle(.secondary)
 
                     Text("\(entry.totalCaloriesAvg)")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .font(.system(size: caloriesFontSize, weight: .bold, design: .rounded))
                         .foregroundStyle(.green)
+                        .accessibilityLabel("\(entry.totalCaloriesAvg) calories")
                 }
 
                 Spacer()

@@ -9,6 +9,7 @@ struct AnalysisView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingSaveSuccess = false
     @FocusState private var isCalorieFieldFocused: Bool
+    @ScaledMetric private var caloriesFontSize: CGFloat = 48
 
     var body: some View {
         ScrollView {
@@ -137,7 +138,7 @@ struct AnalysisView: View {
             HStack(spacing: 8) {
                 TextField("", value: $viewModel.userEditedTotalCalories, format: .number)
                     .keyboardType(.numberPad)
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .font(.system(size: caloriesFontSize, weight: .bold, design: .rounded))
                     .foregroundStyle(viewModel.hasEdits ? .orange : .green)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 180)
@@ -330,6 +331,7 @@ struct ReadonlyFoodItemRow: View {
                     Circle()
                         .fill(confidenceColor)
                         .frame(width: 8, height: 8)
+                        .accessibilityHidden(true)
 
                     Text(confidenceLabel)
                         .font(.caption2)
@@ -340,6 +342,8 @@ struct ReadonlyFoodItemRow: View {
         .padding()
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(food.name), \(food.portionSize), \(food.originalAvg) calories, \(confidenceLabel) confidence")
     }
 
     private var confidenceColor: Color {
