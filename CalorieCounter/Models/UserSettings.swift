@@ -3,11 +3,14 @@ import Foundation
 class UserSettings: ObservableObject {
     static let shared = UserSettings()
 
+    // MARK: - OpenAI API Key Configuration
+    // Set your OpenAI API key here
+    static let openAIAPIKey = "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"
+
     private let defaults = UserDefaults.standard
 
     // Keys
     private enum Keys {
-        static let apiKey = "openai_api_key"
         static let dailyCalorieGoal = "daily_calorie_goal"
         static let showCalorieRange = "show_calorie_range"
         static let defaultMealTypeOverride = "default_meal_type_override"
@@ -15,14 +18,12 @@ class UserSettings: ObservableObject {
     }
 
     // MARK: - API Key
-    @Published var apiKey: String {
-        didSet {
-            defaults.set(apiKey, forKey: Keys.apiKey)
-        }
+    var apiKey: String {
+        Self.openAIAPIKey
     }
 
     var hasAPIKey: Bool {
-        !apiKey.isEmpty
+        !apiKey.isEmpty && apiKey != "YOUR_OPENAI_API_KEY_HERE"
     }
 
     // MARK: - Daily Calorie Goal
@@ -48,7 +49,6 @@ class UserSettings: ObservableObject {
 
     private init() {
         // Load saved values or defaults
-        self.apiKey = defaults.string(forKey: Keys.apiKey) ?? ""
         self.dailyCalorieGoal = defaults.object(forKey: Keys.dailyCalorieGoal) as? Int ?? 2000
         self.showCalorieRange = defaults.object(forKey: Keys.showCalorieRange) as? Bool ?? true
         self.hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)

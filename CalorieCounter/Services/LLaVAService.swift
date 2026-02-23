@@ -51,10 +51,7 @@ class LLaVAService: ObservableObject {
         }
     }
 
-    func setAPIKey(_ key: String) async {
-        await openAIService.setAPIKey(key)
-        await checkAPIKey()
-    }
+    
 
     func loadModel() async throws {
         guard !isModelLoaded else { return }

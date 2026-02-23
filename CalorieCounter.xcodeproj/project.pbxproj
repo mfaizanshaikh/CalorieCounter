@@ -31,6 +31,7 @@
 		001122330000000000000042 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000052 /* UserSettings.swift */; };
 		001122330000000000000043 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000053 /* SettingsViewModel.swift */; };
 		001122330000000000000044 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000054 /* SettingsView.swift */; };
+		001122330000000000000045 /* TodayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000055 /* TodayDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +60,7 @@
 		001122330000000000000052 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
 		001122330000000000000053 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		001122330000000000000054 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		001122330000000000000055 /* TodayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,6 +188,7 @@
 			isa = PBXGroup;
 			children = (
 				001122330000000000000035 /* DashboardView.swift */,
+				001122330000000000000055 /* TodayDetailView.swift */,
 			);
 			path = Dashboard;
 			sourceTree = "<group>";
@@ -299,6 +302,7 @@
 				001122330000000000000042 /* UserSettings.swift in Sources */,
 				001122330000000000000043 /* SettingsViewModel.swift in Sources */,
 				001122330000000000000044 /* SettingsView.swift in Sources */,
+				001122330000000000000045 /* TodayDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -431,10 +435,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6GB3RT7J95;
+				DEVELOPMENT_TEAM = KJS5669LU6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CalorieCounter/Info.plist;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "CalorieCounter needs camera access to capture food images for calorie estimation.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "CalorieCounter needs photo library access to select food images for calorie estimation.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -442,12 +447,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.caloriecounter;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mfaizanshaikh.caloriecounter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -462,10 +468,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6GB3RT7J95;
+				DEVELOPMENT_TEAM = KJS5669LU6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CalorieCounter/Info.plist;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "CalorieCounter needs camera access to capture food images for calorie estimation.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "CalorieCounter needs photo library access to select food images for calorie estimation.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -473,12 +480,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.caloriecounter;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mfaizanshaikh.caloriecounter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

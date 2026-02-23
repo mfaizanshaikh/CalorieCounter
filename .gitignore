@@ -1,0 +1,76 @@
+# ===============================
+# Xcode / iOS (Swift / Objective-C)
+# Project: CalorieCounter.xcodeproj
+# ===============================
+
+# Xcode build products
+build/
+DerivedData/
+
+# User-specific Xcode files
+*.xcuserstate
+*.xcuserdata/
+
+# Workspace settings
+*.xcworkspace/xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Accidental backups
+*~
+*.swp
+*.orig
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Code coverage
+*.gcno
+*.gcda
+
+# Temporary files
+.tmp/
+.cache/
+
+# Firebase (if used)
+GoogleService-Info.plist
+
+# Environment / secrets
+.env
+.env.*
+
+# Xcode previews
+.previews/
+
+# Archive
+*.xcarchive
+
+# ===============================
+# Keep project file tracked
+# ===============================
+!CalorieCounter.xcodeproj/project.pbxproj

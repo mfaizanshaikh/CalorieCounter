@@ -2,15 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSCameraUsageDescription</key>
-	<string>CalorieCounter needs camera access to capture food images for calorie estimation.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>CalorieCounter needs photo library access to select food images for calorie estimation.</string>
 	<key>UIFileSharingEnabled</key>
-	<true/>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>UISupportsDocumentBrowser</key>
 	<true/>
 </dict>
 </plist>

@@ -115,11 +115,11 @@ actor OpenAIService {
     private let model = "gpt-5-mini" // Latest cost-effective vision model
 
     private var apiKey: String? {
-        // Try to get from UserDefaults first, then environment
-        if let key = UserDefaults.standard.string(forKey: "openai_api_key"), !key.isEmpty {
-            return key
+        let key = UserSettings.openAIAPIKey
+        guard !key.isEmpty && key != "YOUR_OPENAI_API_KEY_HERE" else {
+            return nil
         }
-        return ProcessInfo.processInfo.environment["OPENAI_API_KEY"]
+        return key
     }
 
     private let systemPrompt = """
@@ -165,12 +165,8 @@ actor OpenAIService {
 
     private init() {}
 
-    func setAPIKey(_ key: String) {
-        UserDefaults.standard.set(key, forKey: "openai_api_key")
-    }
-
     func hasAPIKey() -> Bool {
-        return apiKey != nil && !(apiKey?.isEmpty ?? true)
+        return apiKey != nil
     }
 
     func analyzeFood(image: UIImage) async throws -> CalorieEstimation {
@@ -390,7 +386,7 @@ actor OpenAIService {
         var errorDescription: String? {
             switch self {
             case .missingAPIKey:
-                return "OpenAI API key not configured. Please add your API key in Settings."
+                return "OpenAI API key not configured. Please set your API key in UserSettings.swift"
             case .imageProcessingFailed:
                 return "Failed to process image for analysis"
             case .invalidURL:

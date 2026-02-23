@@ -58,16 +58,38 @@ struct DashboardView: View {
                 .tint(.green)
 
             HStack {
-                Text("Goal: \(viewModel.formattedDailyGoal) cal")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Goal")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Text("\(viewModel.formattedDailyGoal)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
 
                 Spacer()
 
-                Text("\(Int(viewModel.todayProgress * 100))%")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.green)
+                VStack(spacing: 2) {
+                    Text("Remaining")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Text("\(max(0, viewModel.dailyGoal - viewModel.todayCalories.avg))")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(viewModel.todayCalories.avg >= viewModel.dailyGoal ? .red : .green)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Progress")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Text("\(Int(viewModel.todayProgress * 100))%")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.green)
+                }
             }
 
             if viewModel.showCalorieRange && viewModel.todayCalories.min > 0 {

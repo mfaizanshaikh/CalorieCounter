@@ -10,18 +10,12 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                apiKeySection
                 calorieGoalSection
                 displaySection
                 dataSection
                 aboutSection
             }
             .navigationTitle("Settings")
-            .alert("API Key", isPresented: $viewModel.showingAPIKeyAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(viewModel.apiKeyAlertMessage)
-            }
             .alert("Clear All Data", isPresented: $showingClearDataAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Clear", role: .destructive) {
@@ -30,76 +24,6 @@ struct SettingsView: View {
             } message: {
                 Text("This will permanently delete all your meal entries. This action cannot be undone.")
             }
-        }
-    }
-
-    // MARK: - API Key Section
-    private var apiKeySection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    if viewModel.isAPIKeyVisible {
-                        TextField("sk-...", text: $viewModel.apiKeyInput)
-                            .textContentType(.password)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .font(.system(.body, design: .monospaced))
-                    } else {
-                        SecureField("sk-...", text: $viewModel.apiKeyInput)
-                            .textContentType(.password)
-                            .autocapitalization(.none)
-                            .font(.system(.body, design: .monospaced))
-                    }
-
-                    Button {
-                        viewModel.isAPIKeyVisible.toggle()
-                    } label: {
-                        Image(systemName: viewModel.isAPIKeyVisible ? "eye.slash" : "eye")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    Button {
-                        Task {
-                            await viewModel.validateAPIKey()
-                        }
-                    } label: {
-                        if viewModel.isValidatingKey {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                        } else {
-                            Text("Save Key")
-                                .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
-                    .disabled(viewModel.apiKeyInput.isEmpty || viewModel.isValidatingKey)
-
-                    if viewModel.hasAPIKey {
-                        Button("Clear", role: .destructive) {
-                            viewModel.clearAPIKey()
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-            }
-            .padding(.vertical, 4)
-
-            if viewModel.hasAPIKey {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text("API key configured")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        } header: {
-            Text("OpenAI API Key")
-        } footer: {
-            Text("Required for food analysis. Get your API key from platform.openai.com")
         }
     }
 
@@ -202,15 +126,6 @@ struct SettingsView: View {
                 Spacer()
                 Text(viewModel.appVersion)
                     .foregroundStyle(.secondary)
-            }
-
-            Link(destination: URL(string: "https://platform.openai.com/docs")!) {
-                HStack {
-                    Text("OpenAI Documentation")
-                    Spacer()
-                    Image(systemName: "arrow.up.right.square")
-                        .foregroundStyle(.secondary)
-                }
             }
         } header: {
             Text("About")
