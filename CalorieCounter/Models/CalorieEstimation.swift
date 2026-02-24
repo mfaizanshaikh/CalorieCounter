@@ -26,6 +26,12 @@ struct CalorieEstimation: Codable {
         let carbs: Double?
         let fat: Double?
         let fiber: Double?
+        let sugar: Double?
+        let saturatedFat: Double?
+        let transFat: Double?
+        let cholesterol: Double?  // mg
+        let sodium: Double?       // mg
+        let potassium: Double?    // mg
 
         // Custom coding keys for flexibility
         enum CodingKeys: String, CodingKey {
@@ -33,6 +39,8 @@ struct CalorieEstimation: Codable {
             case caloriesMin, caloriesMax, caloriesAvg
             case confidence
             case protein, carbs, fat, fiber
+            case sugar, saturatedFat, transFat
+            case cholesterol, sodium, potassium
         }
 
         init(from decoder: Decoder) throws {
@@ -47,9 +55,15 @@ struct CalorieEstimation: Codable {
             carbs = try container.decodeIfPresent(Double.self, forKey: .carbs)
             fat = try container.decodeIfPresent(Double.self, forKey: .fat)
             fiber = try container.decodeIfPresent(Double.self, forKey: .fiber)
+            sugar = try container.decodeIfPresent(Double.self, forKey: .sugar)
+            saturatedFat = try container.decodeIfPresent(Double.self, forKey: .saturatedFat)
+            transFat = try container.decodeIfPresent(Double.self, forKey: .transFat)
+            cholesterol = try container.decodeIfPresent(Double.self, forKey: .cholesterol)
+            sodium = try container.decodeIfPresent(Double.self, forKey: .sodium)
+            potassium = try container.decodeIfPresent(Double.self, forKey: .potassium)
         }
 
-        init(name: String, portionSize: String, caloriesMin: Int, caloriesMax: Int, caloriesAvg: Int, confidence: Double, protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, fiber: Double? = nil) {
+        init(name: String, portionSize: String, caloriesMin: Int, caloriesMax: Int, caloriesAvg: Int, confidence: Double, protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, fiber: Double? = nil, sugar: Double? = nil, saturatedFat: Double? = nil, transFat: Double? = nil, cholesterol: Double? = nil, sodium: Double? = nil, potassium: Double? = nil) {
             self.name = name
             self.portionSize = portionSize
             self.caloriesMin = caloriesMin
@@ -60,6 +74,12 @@ struct CalorieEstimation: Codable {
             self.carbs = carbs
             self.fat = fat
             self.fiber = fiber
+            self.sugar = sugar
+            self.saturatedFat = saturatedFat
+            self.transFat = transFat
+            self.cholesterol = cholesterol
+            self.sodium = sodium
+            self.potassium = potassium
         }
     }
 }
@@ -88,7 +108,13 @@ extension CalorieEstimation {
                 protein: food.protein,
                 carbs: food.carbs,
                 fat: food.fat,
-                fiber: food.fiber
+                fiber: food.fiber,
+                sugar: food.sugar,
+                saturatedFat: food.saturatedFat,
+                transFat: food.transFat,
+                cholesterol: food.cholesterol,
+                sodium: food.sodium,
+                potassium: food.potassium
             )
         }
     }
@@ -108,6 +134,30 @@ extension CalorieEstimation {
 
     var totalFiber: Double {
         foods.compactMap { $0.fiber }.reduce(0, +)
+    }
+
+    var totalSugar: Double {
+        foods.compactMap { $0.sugar }.reduce(0, +)
+    }
+
+    var totalSaturatedFat: Double {
+        foods.compactMap { $0.saturatedFat }.reduce(0, +)
+    }
+
+    var totalTransFat: Double {
+        foods.compactMap { $0.transFat }.reduce(0, +)
+    }
+
+    var totalCholesterol: Double {
+        foods.compactMap { $0.cholesterol }.reduce(0, +)
+    }
+
+    var totalSodium: Double {
+        foods.compactMap { $0.sodium }.reduce(0, +)
+    }
+
+    var totalPotassium: Double {
+        foods.compactMap { $0.potassium }.reduce(0, +)
     }
 
     var hasMacroData: Bool {

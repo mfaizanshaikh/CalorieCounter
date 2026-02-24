@@ -13,6 +13,7 @@ struct MealDetailView: View {
             VStack(spacing: 20) {
                 imageSection
                 caloriesSummary
+                NutritionSummaryView(nutrients: NutrientData(from: entry.foodItems))
                 foodItemsSection
 
                 if !entry.assumptions.isEmpty {

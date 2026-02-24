@@ -15,6 +15,12 @@ struct EditableFoodItem: Identifiable {
     var carbs: Double?
     var fat: Double?
     var fiber: Double?
+    var sugar: Double?
+    var saturatedFat: Double?
+    var transFat: Double?
+    var cholesterol: Double?
+    var sodium: Double?
+    var potassium: Double?
 
     init(from food: CalorieEstimation.EstimatedFood) {
         self.name = food.name
@@ -28,6 +34,12 @@ struct EditableFoodItem: Identifiable {
         self.carbs = food.carbs
         self.fat = food.fat
         self.fiber = food.fiber
+        self.sugar = food.sugar
+        self.saturatedFat = food.saturatedFat
+        self.transFat = food.transFat
+        self.cholesterol = food.cholesterol
+        self.sodium = food.sodium
+        self.potassium = food.potassium
     }
 
     var hasBeenEdited: Bool {
@@ -135,7 +147,13 @@ class AnalysisViewModel: ObservableObject {
                 protein: editableFood.protein,
                 carbs: editableFood.carbs,
                 fat: editableFood.fat,
-                fiber: editableFood.fiber
+                fiber: editableFood.fiber,
+                sugar: editableFood.sugar,
+                saturatedFat: editableFood.saturatedFat,
+                transFat: editableFood.transFat,
+                cholesterol: editableFood.cholesterol,
+                sodium: editableFood.sodium,
+                potassium: editableFood.potassium
             )
         }
 

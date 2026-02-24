@@ -109,6 +109,7 @@ struct AnalysisView: View {
     private func foodDetectedView(_ result: CalorieEstimation) -> some View {
         VStack(spacing: 20) {
             totalCaloriesCard(result)
+            NutritionSummaryView(nutrients: NutrientData(from: viewModel.editableFoods))
             mealTypeSelector
             editableFoodItemsList
 

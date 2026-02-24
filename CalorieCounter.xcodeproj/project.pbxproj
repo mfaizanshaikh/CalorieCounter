@@ -33,6 +33,7 @@
 		001122330000000000000044 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000054 /* SettingsView.swift */; };
 		001122330000000000000045 /* TodayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000055 /* TodayDetailView.swift */; };
 		001122330000000000000046 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000056 /* KeychainHelper.swift */; };
+		001122330000000000000047 /* NutritionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000057 /* NutritionSummaryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +64,7 @@
 		001122330000000000000054 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		001122330000000000000055 /* TodayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayDetailView.swift; sourceTree = "<group>"; };
 		001122330000000000000056 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		001122330000000000000057 /* NutritionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionSummaryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,8 +141,17 @@
 				001122330000000000000111 /* Dashboard */,
 				001122330000000000000112 /* History */,
 				001122330000000000000113 /* Settings */,
+				001122330000000000000114 /* Components */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		001122330000000000000114 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				001122330000000000000057 /* NutritionSummaryView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		001122330000000000000106 /* Services */ = {
@@ -307,6 +318,7 @@
 				001122330000000000000044 /* SettingsView.swift in Sources */,
 				001122330000000000000045 /* TodayDetailView.swift in Sources */,
 				001122330000000000000046 /* KeychainHelper.swift in Sources */,
+				001122330000000000000047 /* NutritionSummaryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

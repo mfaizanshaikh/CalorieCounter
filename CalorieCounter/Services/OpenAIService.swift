@@ -145,6 +145,12 @@ actor OpenAIService {
                 "carbs": 25.0,
                 "fat": 8.5,
                 "fiber": 3.0,
+                "sugar": 5.0,
+                "saturatedFat": 2.5,
+                "transFat": 0.0,
+                "cholesterol": 45.0,
+                "sodium": 300.0,
+                "potassium": 200.0,
                 "confidence": 0.85
             }
         ],
@@ -154,7 +160,7 @@ actor OpenAIService {
         "totalCaloriesAvg": 150
     }
 
-    CRITICAL: All values for caloriesMin, caloriesMax, caloriesAvg, protein, carbs, fat, fiber, confidence, totalCaloriesMin, totalCaloriesMax, and totalCaloriesAvg MUST be numeric values (integers or decimals), never words or text.
+    CRITICAL: All values for caloriesMin, caloriesMax, caloriesAvg, protein, carbs, fat, fiber, sugar, saturatedFat, transFat, cholesterol, sodium, potassium, confidence, totalCaloriesMin, totalCaloriesMax, and totalCaloriesAvg MUST be numeric values (integers or decimals), never words or text. Cholesterol, sodium, and potassium are in milligrams; all other nutrients are in grams.
     """
 
     private let userPrompt = """
