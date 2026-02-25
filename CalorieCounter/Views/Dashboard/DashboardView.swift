@@ -11,12 +11,14 @@ struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    filterBar
+
                     NavigationLink(destination: TodayDetailView()) {
                         todayCard
                     }
                     .buttonStyle(.plain)
 
-                    weeklyChart
+                    calorieTrendChart
                     mealDistributionCard
                     statsGrid
                 }
@@ -31,6 +33,36 @@ struct DashboardView: View {
             }
         }
     }
+
+    // MARK: - Filter Bar
+
+    private var filterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(DashboardFilter.allCases, id: \.self) { filter in
+                    Button(filter.rawValue) {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.selectedFilter = filter
+                        }
+                    }
+                    .font(.subheadline)
+                    .fontWeight(viewModel.selectedFilter == filter ? .semibold : .regular)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        viewModel.selectedFilter == filter
+                            ? Color.green
+                            : Color(.systemGray5)
+                    )
+                    .foregroundStyle(viewModel.selectedFilter == filter ? .white : .primary)
+                    .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+    }
+
+    // MARK: - Today Card (always shows today regardless of filter)
 
     private var todayCard: some View {
         VStack(spacing: 12) {
@@ -105,42 +137,55 @@ struct DashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    private var weeklyChart: some View {
+    // MARK: - Calorie Trend Chart (filtered)
+
+    private var calorieTrendChart: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("This Week")
+                Text(viewModel.selectedFilter.chartTitle)
                     .font(.headline)
 
                 Spacer()
 
-                Text("Avg: \(viewModel.weeklyAverage) cal/day")
+                Text(viewModel.chartAvgLabel)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Chart(viewModel.weeklyData, id: \.date) { item in
-                BarMark(
-                    x: .value("Day", item.date, unit: .day),
-                    y: .value("Calories", item.calories)
-                )
-                .foregroundStyle(.green.gradient)
-                .cornerRadius(4)
-            }
-            .frame(height: 180)
-            .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { _ in
-                    AxisGridLine()
-                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+            let nonZeroData = viewModel.chartData.filter { $0.calories > 0 }
+            if nonZeroData.isEmpty && viewModel.selectedFilter != .today {
+                Text("No data for this period")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+            } else {
+                Chart(viewModel.chartData, id: \.date) { item in
+                    BarMark(
+                        x: .value("Date", item.date, unit: viewModel.selectedFilter.chartUnit),
+                        y: .value("Calories", item.calories)
+                    )
+                    .foregroundStyle(.green.gradient)
+                    .cornerRadius(4)
                 }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading)
+                .frame(height: 180)
+                .chartXAxis {
+                    AxisMarks(values: .automatic) { _ in
+                        AxisGridLine()
+                        AxisValueLabel(format: viewModel.selectedFilter.axisDateFormat)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
             }
         }
         .padding()
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
+
+    // MARK: - Meal Distribution (filtered)
 
     private var mealDistributionCard: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -166,19 +211,21 @@ struct DashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
+    // MARK: - Stats Grid (filtered)
+
     private var statsGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
             StatCard(
-                title: "This Month",
-                value: "\(viewModel.monthlyTotal)",
+                title: viewModel.selectedFilter.rawValue,
+                value: "\(viewModel.periodTotal)",
                 unit: "cal total",
                 icon: "calendar",
                 color: .blue
             )
 
             StatCard(
-                title: "Weekly Avg",
-                value: "\(viewModel.weeklyAverage)",
+                title: "Daily Average",
+                value: "\(viewModel.periodAverage)",
                 unit: "cal/day",
                 icon: "chart.line.uptrend.xyaxis",
                 color: .purple
