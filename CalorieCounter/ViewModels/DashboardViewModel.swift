@@ -69,7 +69,7 @@ class DashboardViewModel: ObservableObject {
     @Published var todayMealCount: Int = 0
     @Published var periodAverage: Int = 0
     @Published var periodTotal: Int = 0
-    @Published var selectedFilter: DashboardFilter = .today {
+    @Published var selectedFilter: DashboardFilter = .week {
         didSet { recomputeStats() }
     }
 
