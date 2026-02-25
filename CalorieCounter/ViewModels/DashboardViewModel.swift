@@ -103,7 +103,7 @@ class DashboardViewModel: ObservableObject {
         let filtered = filteredEntries()
         updateTodayStats(entries: allEntries)
         updateChartData(entries: filtered)
-        updateMealTypeAverages(entries: filtered)
+        updateMealTypeAverages(entries: allEntries)
         updatePeriodStats(entries: filtered)
     }
 

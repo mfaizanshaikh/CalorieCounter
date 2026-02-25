@@ -11,8 +11,6 @@ struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    filterBar
-
                     NavigationLink(destination: TodayDetailView()) {
                         todayCard
                     }
@@ -20,7 +18,7 @@ struct DashboardView: View {
 
                     calorieTrendChart
                     mealDistributionCard
-                    statsGrid
+                    dailyAverageCard
                 }
                 .padding()
             }
@@ -31,34 +29,6 @@ struct DashboardView: View {
             .onChange(of: entries.count) { _, _ in
                 viewModel.updateStats(entries: entries)
             }
-        }
-    }
-
-    // MARK: - Filter Bar
-
-    private var filterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(DashboardFilter.allCases, id: \.self) { filter in
-                    Button(filter.rawValue) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            viewModel.selectedFilter = filter
-                        }
-                    }
-                    .font(.subheadline)
-                    .fontWeight(viewModel.selectedFilter == filter ? .semibold : .regular)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background(
-                        viewModel.selectedFilter == filter
-                            ? Color.green
-                            : Color(.systemGray5)
-                    )
-                    .foregroundStyle(viewModel.selectedFilter == filter ? .white : .primary)
-                    .clipShape(Capsule())
-                }
-            }
-            .padding(.horizontal, 2)
         }
     }
 
@@ -142,8 +112,15 @@ struct DashboardView: View {
     private var calorieTrendChart: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(viewModel.selectedFilter.chartTitle)
-                    .font(.headline)
+                Picker("Period", selection: $viewModel.selectedFilter) {
+                    ForEach(DashboardFilter.allCases, id: \.self) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(.green)
+                .font(.headline)
+                .padding(.leading, -8)
 
                 Spacer()
 
@@ -211,26 +188,16 @@ struct DashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Stats Grid (filtered)
+    // MARK: - Daily Average Card (filtered)
 
-    private var statsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            StatCard(
-                title: viewModel.selectedFilter.rawValue,
-                value: "\(viewModel.periodTotal)",
-                unit: "cal total",
-                icon: "calendar",
-                color: .blue
-            )
-
-            StatCard(
-                title: "Daily Average",
-                value: "\(viewModel.periodAverage)",
-                unit: "cal/day",
-                icon: "chart.line.uptrend.xyaxis",
-                color: .purple
-            )
-        }
+    private var dailyAverageCard: some View {
+        StatCard(
+            title: "Daily Average · \(viewModel.selectedFilter.rawValue)",
+            value: "\(viewModel.periodAverage)",
+            unit: "cal/day",
+            icon: "chart.line.uptrend.xyaxis",
+            color: .purple
+        )
     }
 }
 
