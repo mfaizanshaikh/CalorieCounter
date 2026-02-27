@@ -34,6 +34,11 @@
 		001122330000000000000045 /* TodayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000055 /* TodayDetailView.swift */; };
 		001122330000000000000046 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000056 /* KeychainHelper.swift */; };
 		001122330000000000000047 /* NutritionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000057 /* NutritionSummaryView.swift */; };
+		001122330000000000000061 /* FoodDatabase.json in Resources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000060 /* FoodDatabase.json */; };
+		001122330000000000000063 /* FoodSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000062 /* FoodSearchService.swift */; };
+		001122330000000000000065 /* ManualFoodLogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000064 /* ManualFoodLogViewModel.swift */; };
+		001122330000000000000067 /* ManualFoodLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000066 /* ManualFoodLogView.swift */; };
+		001122330000000000000069 /* SavedFood.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000068 /* SavedFood.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +70,11 @@
 		001122330000000000000055 /* TodayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayDetailView.swift; sourceTree = "<group>"; };
 		001122330000000000000056 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		001122330000000000000057 /* NutritionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionSummaryView.swift; sourceTree = "<group>"; };
+		001122330000000000000060 /* FoodDatabase.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FoodDatabase.json; sourceTree = "<group>"; };
+		001122330000000000000062 /* FoodSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodSearchService.swift; sourceTree = "<group>"; };
+		001122330000000000000064 /* ManualFoodLogViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualFoodLogViewModel.swift; sourceTree = "<group>"; };
+		001122330000000000000066 /* ManualFoodLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualFoodLogView.swift; sourceTree = "<group>"; };
+		001122330000000000000068 /* SavedFood.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedFood.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +126,7 @@
 				001122330000000000000014 /* FoodItem.swift */,
 				001122330000000000000015 /* CalorieEstimation.swift */,
 				001122330000000000000052 /* UserSettings.swift */,
+				001122330000000000000068 /* SavedFood.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -128,6 +139,7 @@
 				001122330000000000000031 /* DashboardViewModel.swift */,
 				001122330000000000000032 /* HistoryViewModel.swift */,
 				001122330000000000000053 /* SettingsViewModel.swift */,
+				001122330000000000000064 /* ManualFoodLogViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -161,6 +173,7 @@
 				001122330000000000000017 /* MealClassifier.swift */,
 				001122330000000000000018 /* CalorieCalculator.swift */,
 				001122330000000000000051 /* OpenAIService.swift */,
+				001122330000000000000062 /* FoodSearchService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -178,6 +191,7 @@
 		001122330000000000000108 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				001122330000000000000060 /* FoodDatabase.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -186,6 +200,7 @@
 			isa = PBXGroup;
 			children = (
 				001122330000000000000033 /* CameraView.swift */,
+				001122330000000000000066 /* ManualFoodLogView.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
@@ -283,6 +298,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				001122330000000000000030 /* Assets.xcassets in Resources */,
+				001122330000000000000061 /* FoodDatabase.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -319,6 +335,10 @@
 				001122330000000000000045 /* TodayDetailView.swift in Sources */,
 				001122330000000000000046 /* KeychainHelper.swift in Sources */,
 				001122330000000000000047 /* NutritionSummaryView.swift in Sources */,
+				001122330000000000000063 /* FoodSearchService.swift in Sources */,
+				001122330000000000000065 /* ManualFoodLogViewModel.swift in Sources */,
+				001122330000000000000067 /* ManualFoodLogView.swift in Sources */,
+				001122330000000000000069 /* SavedFood.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

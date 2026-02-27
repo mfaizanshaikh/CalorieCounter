@@ -5,6 +5,7 @@ enum MealType: String, Codable, CaseIterable {
     case breakfast = "Breakfast"
     case lunch = "Lunch"
     case dinner = "Dinner"
+    case snack = "Snack"
     case lateSnack = "Late Snack"
 
     var icon: String {
@@ -12,6 +13,7 @@ enum MealType: String, Codable, CaseIterable {
         case .breakfast: return "sunrise.fill"
         case .lunch: return "sun.max.fill"
         case .dinner: return "sunset.fill"
+        case .snack: return "fork.knife"
         case .lateSnack: return "moon.stars.fill"
         }
     }

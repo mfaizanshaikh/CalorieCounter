@@ -6,14 +6,14 @@ struct MealClassifier {
         let hour = calendar.component(.hour, from: date)
 
         switch hour {
-        case 5...11:
+        case 5...10:
             return .breakfast
-        case 12...16:
+        case 11...15:
             return .lunch
-        case 17...23:
+        case 16...21:
             return .dinner
         default:
-            return .lateSnack
+            return .snack  // 22–4 (late night counts as snack; lateSnack kept for legacy data)
         }
     }
 

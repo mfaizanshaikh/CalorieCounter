@@ -9,6 +9,7 @@ struct CalorieCounterApp: App {
         let schema = Schema([
             MealEntry.self,
             FoodItem.self,
+            SavedFood.self,
         ])
 
         // Try persistent (on-disk) store first.

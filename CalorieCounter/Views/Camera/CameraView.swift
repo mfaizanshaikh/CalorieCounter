@@ -1,11 +1,14 @@
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct CameraView: View {
     @StateObject private var viewModel = CameraViewModel()
     @StateObject private var analysisViewModel = AnalysisViewModel()
     @State private var showingAnalysis = false
     @State private var showingError = false
+    @State private var showingManualLog = false
+    @Query(sort: \MealEntry.date, order: .reverse) private var entries: [MealEntry]
 
     var body: some View {
         NavigationStack {
@@ -49,6 +52,9 @@ struct CameraView: View {
                         }
                     )
                 }
+            }
+            .navigationDestination(isPresented: $showingManualLog) {
+                ManualFoodLogView(entries: entries)
             }
             .alert("Error", isPresented: $showingError) {
                 Button("OK") {
@@ -136,6 +142,28 @@ struct CameraView: View {
             }
             .buttonStyle(.bordered)
             .accessibilityLabel("Choose photo from library")
+
+            HStack {
+                Rectangle()
+                    .fill(.tertiary)
+                    .frame(height: 0.5)
+                Text("or")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Rectangle()
+                    .fill(.tertiary)
+                    .frame(height: 0.5)
+            }
+
+            Button {
+                showingManualLog = true
+            } label: {
+                Label("Log Food Manually", systemImage: "pencil.and.list.clipboard")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityLabel("Log food manually without a photo")
         }
     }
 }

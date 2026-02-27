@@ -6,6 +6,7 @@ struct MealDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteConfirmation = false
+    @State private var editingFood: FoodItem?
     @ScaledMetric private var caloriesFontSize: CGFloat = 36
 
     var body: some View {
@@ -26,6 +27,14 @@ struct MealDetailView: View {
         }
         .navigationTitle(entry.mealType.rawValue)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $editingFood) { food in
+            FoodItemEditSheet(food: food, entry: entry) {
+                // If all food items were deleted, dismiss the detail view too
+                if entry.foodItems.isEmpty {
+                    dismiss()
+                }
+            }
+        }
         .confirmationDialog(
             "Delete Meal",
             isPresented: $showingDeleteConfirmation,
@@ -103,11 +112,19 @@ struct MealDetailView: View {
 
     private var foodItemsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Food Items")
-                .font(.headline)
+            HStack {
+                Text("Food Items")
+                    .font(.headline)
+                Spacer()
+                Text("Tap to edit")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             ForEach(entry.foodItems) { food in
                 DetailFoodItemRow(food: food)
+                    .contentShape(Rectangle())
+                    .onTapGesture { editingFood = food }
             }
         }
     }
@@ -195,6 +212,11 @@ struct DetailFoodItemRow: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
+
+            Image(systemName: "pencil")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.leading, 4)
         }
         .padding()
         .background(Color(.systemGray6))
@@ -207,6 +229,154 @@ struct DetailFoodItemRow: View {
         case 0.5..<0.8: return .yellow
         default: return .orange
         }
+    }
+}
+
+// MARK: - Food Item Edit Sheet
+
+struct FoodItemEditSheet: View {
+    let food: FoodItem
+    let entry: MealEntry
+    let onDelete: () -> Void
+
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var calText: String
+    @State private var portionText: String
+    @State private var proteinText: String
+    @State private var carbsText: String
+    @State private var fatText: String
+    @State private var fiberText: String
+    @State private var showDeleteConfirm = false
+
+    init(food: FoodItem, entry: MealEntry, onDelete: @escaping () -> Void) {
+        self.food = food
+        self.entry = entry
+        self.onDelete = onDelete
+        _calText      = State(initialValue: "\(food.caloriesAvg)")
+        _portionText  = State(initialValue: food.portionSize)
+        _proteinText  = State(initialValue: food.protein.map  { String(format: "%.1f", $0) } ?? "")
+        _carbsText    = State(initialValue: food.carbs.map    { String(format: "%.1f", $0) } ?? "")
+        _fatText      = State(initialValue: food.fat.map      { String(format: "%.1f", $0) } ?? "")
+        _fiberText    = State(initialValue: food.fiber.map    { String(format: "%.1f", $0) } ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Food") {
+                    Text(food.name).font(.headline)
+                }
+
+                Section("Serving") {
+                    HStack {
+                        Text("Portion label")
+                        Spacer()
+                        TextField("e.g. 150 g", text: $portionText)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+
+                Section("Calories") {
+                    HStack {
+                        Text("Calories")
+                        Spacer()
+                        TextField("0", text: $calText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                    }
+                }
+
+                Section("Macros (optional)") {
+                    macroField("Protein (g)", text: $proteinText)
+                    macroField("Carbs (g)",   text: $carbsText)
+                    macroField("Fat (g)",     text: $fatText)
+                    macroField("Fiber (g)",   text: $fiberText)
+                }
+
+                Section {
+                    Button("Delete Food Item", role: .destructive) {
+                        showDeleteConfirm = true
+                    }
+                }
+            }
+            .navigationTitle("Edit Food")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { saveChanges() }
+                        .fontWeight(.semibold)
+                }
+            }
+            .confirmationDialog(
+                "Delete Food Item",
+                isPresented: $showDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) { deleteFoodItem() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Remove \(food.name) from this meal?")
+            }
+        }
+    }
+
+    private func macroField(_ label: String, text: Binding<String>) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            TextField("—", text: text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 80)
+        }
+    }
+
+    private func saveChanges() {
+        let newCal = Int(calText) ?? food.caloriesAvg
+        food.caloriesMin = newCal
+        food.caloriesMax = newCal
+        food.caloriesAvg = newCal
+
+        let trimmed = portionText.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty { food.portionSize = trimmed }
+
+        food.protein = Double(proteinText)
+        food.carbs   = Double(carbsText)
+        food.fat     = Double(fatText)
+        food.fiber   = Double(fiberText)
+
+        // Recalculate the parent entry's totals
+        let total = entry.foodItems.reduce(0) { $0 + $1.caloriesAvg }
+        entry.totalCaloriesMin = total
+        entry.totalCaloriesMax = total
+        entry.totalCaloriesAvg = total
+
+        try? modelContext.save()
+        dismiss()
+    }
+
+    private func deleteFoodItem() {
+        entry.foodItems.removeAll { $0.id == food.id }
+        modelContext.delete(food)
+
+        let total = entry.foodItems.reduce(0) { $0 + $1.caloriesAvg }
+        entry.totalCaloriesMin = total
+        entry.totalCaloriesMax = total
+        entry.totalCaloriesAvg = total
+
+        if entry.foodItems.isEmpty {
+            modelContext.delete(entry)
+        }
+
+        try? modelContext.save()
+        dismiss()
+        onDelete()
     }
 }
 
