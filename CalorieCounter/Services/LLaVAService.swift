@@ -76,7 +76,7 @@ class LLaVAService: ObservableObject {
         await MainActor.run {
             loadingProgress = 1.0
             if hasAPIKey {
-                loadingStatus = "Ready (OpenAI GPT-5 Mini Vision)"
+                loadingStatus = "Ready (OpenAI Vision)"
             } else {
                 loadingStatus = "Ready (API key required for analysis)"
             }

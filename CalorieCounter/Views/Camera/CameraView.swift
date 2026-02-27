@@ -56,7 +56,26 @@ struct CameraView: View {
             .navigationDestination(isPresented: $showingManualLog) {
                 ManualFoodLogView(entries: entries)
             }
-            .alert("Error", isPresented: $showingError) {
+            .alert("Camera Access Required", isPresented: Binding(
+                get: { showingError && viewModel.isCameraDenied },
+                set: { if !$0 { viewModel.errorMessage = nil } }
+            )) {
+                Button("Open Settings") {
+                    viewModel.errorMessage = nil
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                Text("Please enable camera access in Settings so you can take food photos.")
+            }
+            .alert("Error", isPresented: Binding(
+                get: { showingError && !viewModel.isCameraDenied },
+                set: { if !$0 { viewModel.errorMessage = nil } }
+            )) {
                 Button("OK") {
                     viewModel.errorMessage = nil
                 }

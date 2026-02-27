@@ -196,8 +196,21 @@ struct SettingsView: View {
                 Text(viewModel.appVersion)
                     .foregroundStyle(.secondary)
             }
+            Link(destination: URL(string: "https://mfaizanshaikh.wordpress.com/2026/02/27/privacy-policy-ai-calorie-coach/")!) {
+                HStack {
+                    Text("Privacy Policy")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel("Privacy Policy — opens in browser")
         } header: {
             Text("About")
+        } footer: {
+            Text("This app sends food photos to OpenAI to estimate nutritional content. Photos are not stored by OpenAI beyond the duration of the request.")
         }
     }
 

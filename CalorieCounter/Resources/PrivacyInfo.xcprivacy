@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The app does NOT track users across apps/websites for advertising -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<!-- No tracking domains used -->
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!--
+		Data collected and sent off-device:
+		- Food photos are sent to OpenAI solely for AI nutritional analysis.
+		  They are not linked to the user's identity and are not used for tracking.
+	-->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhotosorVideos</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<!-- Photos are sent to OpenAI for AI-powered calorie estimation -->
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
+
+	<!--
+		Required Reason APIs accessed by this app:
+		- UserDefaults: used to persist user preferences (calorie goal, display settings,
+		  onboarding state). All values are exclusively the app's own data (reason CA92.1).
+	-->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- CA92.1: Access UserDefaults to read/write the app's own data -->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

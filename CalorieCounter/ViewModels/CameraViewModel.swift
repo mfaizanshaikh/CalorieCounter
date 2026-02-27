@@ -63,6 +63,10 @@ class CameraViewModel: ObservableObject {
         }
     }
 
+    var isCameraDenied: Bool {
+        cameraPermissionStatus == .denied || cameraPermissionStatus == .restricted
+    }
+
     func clearCapturedImage() {
         capturedImage = nil
         selectedPhotoItem = nil
