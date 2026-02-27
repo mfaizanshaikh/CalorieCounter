@@ -281,8 +281,8 @@ struct AnalysisView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            if error.contains("Model") || error.contains("model") {
-                Text("Please go to Settings tab to import the AI models.")
+            if error.contains("API key") {
+                Text("Go to the Settings tab to add your OpenAI API key.")
                     .font(.caption)
                     .foregroundStyle(.blue)
                     .padding(.top, 4)
