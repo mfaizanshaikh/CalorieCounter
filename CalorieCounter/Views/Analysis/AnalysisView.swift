@@ -281,8 +281,8 @@ struct AnalysisView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            if error.contains("API key") {
-                Text("Go to the Settings tab to add your OpenAI API key.")
+            if error.contains("Daily limit") {
+                Text("You've reached the daily limit. Add your own API key in Settings for unlimited usage.")
                     .font(.caption)
                     .foregroundStyle(.blue)
                     .padding(.top, 4)

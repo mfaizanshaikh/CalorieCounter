@@ -6,7 +6,6 @@ enum LLaVAError: Error, LocalizedError {
     case imageProcessingFailed
     case inferenceError(String)
     case parsingError
-    case apiKeyMissing
 
     var errorDescription: String? {
         switch self {
@@ -18,8 +17,6 @@ enum LLaVAError: Error, LocalizedError {
             return "Analysis error: \(message)"
         case .parsingError:
             return "Failed to parse analysis results"
-        case .apiKeyMissing:
-            return "OpenAI API key not configured. Please add your API key in Settings."
         }
     }
 }
@@ -38,20 +35,18 @@ class LLaVAService: ObservableObject {
     private let openAIService = OpenAIService.shared
 
     private init() {
+        hasAPIKey = true
         Task {
-            await checkAPIKey()
             try? await loadModel()
         }
     }
 
     func checkAPIKey() async {
-        let hasKey = await openAIService.hasAPIKey()
+        // Always true — proxy provides a key when the user has none
         await MainActor.run {
-            self.hasAPIKey = hasKey
+            self.hasAPIKey = true
         }
     }
-
-    
 
     func loadModel() async throws {
         guard !isModelLoaded else { return }
@@ -66,20 +61,14 @@ class LLaVAService: ObservableObject {
 
         await MainActor.run {
             loadingProgress = 0.5
-            loadingStatus = "Checking API configuration..."
+            loadingStatus = "Connecting..."
         }
-
-        await checkAPIKey()
 
         try await Task.sleep(nanoseconds: 200_000_000)
 
         await MainActor.run {
             loadingProgress = 1.0
-            if hasAPIKey {
-                loadingStatus = "Ready (OpenAI Vision)"
-            } else {
-                loadingStatus = "Ready (API key required for analysis)"
-            }
+            loadingStatus = "Ready (OpenAI Vision)"
             isModelLoaded = true
         }
     }
@@ -95,14 +84,6 @@ class LLaVAService: ObservableObject {
             }
         }
 
-        // Check for API key
-        await checkAPIKey()
-
-        guard hasAPIKey else {
-            throw LLaVAError.apiKeyMissing
-        }
-
-        // Use OpenAI Vision API
         do {
             let result = try await openAIService.analyzeFood(image: image)
             return result

@@ -111,10 +111,13 @@ struct OpenAIAPIErrorDetail: Decodable {
 actor OpenAIService {
     static let shared = OpenAIService()
 
-    private let baseURL = "https://api.openai.com/v1/responses"
+    private let proxyBaseURL = "https://mfaizanshaikh.com/ai-calorie-coach/php-proxy/index.php"
+    private let directBaseURL = "https://api.openai.com/v1/responses"
     private let model = "o3"
+    private let bundleID = Bundle.main.bundleIdentifier ?? "com.mfaizanshaikh.caloriecounter"
 
-    private var apiKey: String? {
+    /// Returns the user's own API key if configured, nil otherwise (uses proxy).
+    private var userAPIKey: String? {
         let key = UserSettings.openAIAPIKey
         guard !key.isEmpty else { return nil }
         return key
@@ -169,15 +172,12 @@ actor OpenAIService {
 
     private init() {}
 
+    /// Always true — the proxy provides a key when the user has none.
     func hasAPIKey() -> Bool {
-        return apiKey != nil
+        return true
     }
 
     func analyzeFood(image: UIImage) async throws -> CalorieEstimation {
-        guard let apiKey = apiKey, !apiKey.isEmpty else {
-            throw OpenAIServiceError.missingAPIKey
-        }
-
         guard let imageData = prepareImage(image),
               let base64String = imageData.base64EncodedString() as String? else {
             throw OpenAIServiceError.imageProcessingFailed
@@ -195,7 +195,7 @@ actor OpenAIService {
             maxOutputTokens: 16384
         )
 
-        let response = try await makeRequest(request, apiKey: apiKey)
+        let response = try await makeRequest(request)
         return try parseResponse(response)
     }
 
@@ -236,16 +236,28 @@ actor OpenAIService {
         return resizedImage.jpegData(compressionQuality: 0.2)
     }
 
-    private func makeRequest(_ request: OpenAIResponsesRequest, apiKey: String) async throws -> OpenAIResponsesResponse {
-        guard let url = URL(string: baseURL) else {
+    private func makeRequest(_ request: OpenAIResponsesRequest) async throws -> OpenAIResponsesResponse {
+        let useDirectAPI = userAPIKey != nil
+        let urlString = useDirectAPI ? directBaseURL : proxyBaseURL
+
+        guard let url = URL(string: urlString) else {
             throw OpenAIServiceError.invalidURL
         }
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         urlRequest.timeoutInterval = 120
+
+        if let apiKey = userAPIKey {
+            // User has their own key — call OpenAI directly
+            urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        } else {
+            // Use proxy — add identification headers (no API key sent)
+            urlRequest.setValue(bundleID, forHTTPHeaderField: "X-Bundle-ID")
+            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            urlRequest.setValue(deviceId, forHTTPHeaderField: "X-Device-ID")
+        }
 
         let encoder = JSONEncoder()
         urlRequest.httpBody = try encoder.encode(request)
@@ -349,7 +361,6 @@ actor OpenAIService {
     }
 
     enum OpenAIServiceError: Error, LocalizedError {
-        case missingAPIKey
         case imageProcessingFailed
         case invalidURL
         case invalidResponse
@@ -360,8 +371,6 @@ actor OpenAIService {
 
         var errorDescription: String? {
             switch self {
-            case .missingAPIKey:
-                return "OpenAI API key not configured. Please add your API key in Settings."
             case .imageProcessingFailed:
                 return "Failed to process image for analysis"
             case .invalidURL:

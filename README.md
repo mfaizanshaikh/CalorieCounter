@@ -1,57 +1,76 @@
-# CalorieCounter
+# AI Calorie Coach
 
-An AI-powered iOS app that estimates calories from food photos using computer vision.
+An AI-powered iOS app that estimates calories from food photos using computer vision and lets you manually log meals from a database of 9,600+ foods.
 
+[![App Store](https://img.shields.io/badge/App_Store-Available-blue.svg)](https://apps.apple.com/app/ai-calorie-coach/id6741466804)
 ![iOS](https://img.shields.io/badge/iOS-17.0+-blue.svg)
 ![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0-purple.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 ## Features
 
 ### AI-Powered Food Analysis
 - Take a photo of your meal and get instant calorie estimates
+- Uses OpenAI's vision model (o3) for accurate food detection
 - Identifies multiple food items in a single image
 - Provides calorie ranges (min/max/average) for accuracy
 - Detects portion sizes from visual context
-- Shows confidence levels for each food item
+- Shows confidence levels (High/Medium/Low) for each food item
 - Displays assumptions made during analysis
+- Works out of the box with built-in daily limits — no API key required
+- Optionally add your own OpenAI API key for unlimited usage
+
+### Manual Food Logging
+- Search a local database of 9,600+ foods with full macro information
+- AI-powered online search fallback for foods not in the database
+- Quick access to recently logged and frequently used foods
+- Customizable quantity and serving size selection
+- Add multiple items to a meal basket before saving
+- Support for all meal types: Breakfast, Lunch, Dinner, Snack, Late Snack
 
 ### Smart Tracking
 - Automatic meal type classification based on time of day
-- Adjustable calorie estimates with intuitive sliders
-- Edit individual food items or total meal calories
+- Adjustable calorie estimates with intuitive sliders (50%–200%)
+- Edit individual food items or total meal calories inline
+- Reset to original AI analysis with one tap
 - Search and filter your meal history
 
 ### Analytics Dashboard
-- Daily calorie progress with visual progress bar
-- Weekly calorie trends with bar charts
-- Meal type distribution analysis
-- Monthly calorie totals
-- Remaining calories for the day
+- Daily calorie progress with visual progress bar and remaining calories
+- Calorie trend charts with time period filters (1 Week, 2 Weeks, 1 Month, 3 Months, All Time)
+- Meal type distribution analysis with pie/donut chart
+- Daily average calorie metrics
+- Goal progress percentage indicator
+
+### Comprehensive Nutrition Data
+- Detailed nutrition facts panel for each meal
+- Macros: protein, carbohydrates, fat
+- Micros: fiber, sugar, sodium, cholesterol, potassium
+- Per-food-item and per-meal breakdowns
 
 ### Personalization
-- Customizable daily calorie goals (1000-4000 cal)
-- Quick presets for common goals (Weight Loss, Maintenance, Bulking, etc.)
-- Optional calorie range display
+- Customizable daily calorie goals (1,000–4,000 cal)
+- Quick presets: Weight Loss (1,500), Moderate Loss (1,750), Maintenance (2,000), Moderate Gain (2,250), Weight Gain (2,500), Bulking (3,000)
+- Optional calorie range display toggle
+- Secure API key management via iOS Keychain
 
 ## Screenshots
 
-| Capture | Analysis | Dashboard | History |
-|---------|----------|-----------|---------|
-| Take food photos | Review AI analysis | Track progress | Browse meals |
+| Capture | Analysis | Manual Log | Dashboard | History |
+|---------|----------|------------|-----------|---------|
+| Take food photos | Review AI analysis | Search & add foods | Track progress | Browse meals |
 
 ## Requirements
 
 - iOS 17.0+
 - Xcode 15.0+
-- OpenAI API key
+- OpenAI API key (optional — app works with built-in limits)
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/CalorieCounter.git
+git clone https://github.com/mfaizanshaikhh/CalorieCounter.git
 cd CalorieCounter
 ```
 
@@ -60,88 +79,76 @@ cd CalorieCounter
 open CalorieCounter.xcodeproj
 ```
 
-3. Configure your OpenAI API key in `CalorieCounter/Models/UserSettings.swift`:
-```swift
-static let openAIAPIKey = "sk-your-api-key-here"
-```
+3. Build and run on your device or simulator.
 
-4. Build and run on your device or simulator.
-
-## Configuration
-
-### API Key Setup
-
-The app uses OpenAI's GPT-5 Mini vision model for food analysis. To get an API key:
-
-1. Create an account at [platform.openai.com](https://platform.openai.com)
-2. Generate an API key from the API Keys section
-3. Add your key to `UserSettings.swift` as shown above
-
-### Daily Calorie Goal
-
-You can customize your daily calorie goal in the Settings tab:
-- Use the slider to set a custom value (1000-4000 calories)
-- Or choose from quick presets:
-  - Weight Loss: 1500 cal
-  - Moderate Loss: 1750 cal
-  - Maintenance: 2000 cal
-  - Moderate Gain: 2250 cal
-  - Weight Gain: 2500 cal
-  - Bulking: 3000 cal
+4. (Optional) Add your own OpenAI API key in Settings for unlimited usage.
 
 ## Architecture
 
 ```
 CalorieCounter/
 ├── Models/
-│   ├── MealEntry.swift        # Core meal data model
-│   ├── FoodItem.swift         # Individual food item model
-│   ├── CalorieEstimation.swift # API response model
-│   └── UserSettings.swift     # User preferences
+│   ├── MealEntry.swift           # Core meal data model
+│   ├── FoodItem.swift            # Individual food item with full nutrition
+│   ├── SavedFood.swift           # User-saved frequently logged foods
+│   ├── CalorieEstimation.swift   # AI response model
+│   └── UserSettings.swift        # Preferences + Keychain integration
 ├── Views/
-│   ├── ContentView.swift      # Tab navigation
-│   ├── Camera/                # Photo capture
-│   ├── Analysis/              # AI analysis results
-│   ├── Dashboard/             # Analytics & stats
-│   ├── History/               # Meal history
-│   └── Settings/              # User settings
+│   ├── ContentView.swift         # Tab navigation
+│   ├── Camera/                   # Photo capture & manual food logging
+│   ├── Analysis/                 # AI analysis results & editing
+│   ├── Dashboard/                # Analytics, charts & stats
+│   ├── History/                  # Meal history & detail views
+│   ├── Settings/                 # User settings & about
+│   └── Components/               # Nutrition summary panel
 ├── ViewModels/
 │   ├── AnalysisViewModel.swift
 │   ├── DashboardViewModel.swift
-│   ├── HistoryViewModel.swift
-│   └── CameraViewModel.swift
+│   ├── ManualFoodLogViewModel.swift
+│   ├── CameraViewModel.swift
+│   └── SettingsViewModel.swift
 ├── Services/
-│   ├── OpenAIService.swift    # OpenAI API integration
-│   ├── MealClassifier.swift   # Time-based meal classification
-│   └── CalorieCalculator.swift # Statistics calculations
+│   ├── OpenAIService.swift       # OpenAI Responses API (o3 vision)
+│   ├── FoodSearchService.swift   # Local DB search + AI fallback
+│   ├── LLaVAService.swift        # Legacy wrapper → OpenAIService
+│   ├── MealClassifier.swift      # Time-based meal classification
+│   └── CalorieCalculator.swift   # Statistics calculations
+├── Resources/
+│   ├── FoodDatabase.json         # 9,600+ foods with per-100g macros
+│   └── PrivacyInfo.xcprivacy     # App privacy manifest
 └── Utilities/
-    ├── ImageProcessor.swift   # Image compression
-    └── DateExtensions.swift   # Date helpers
+    ├── KeychainHelper.swift      # Secure API key storage
+    └── DateExtensions.swift      # Date helpers
 ```
 
 ## Technology Stack
 
 - **UI Framework:** SwiftUI
-- **Data Persistence:** SwiftData
+- **Data Persistence:** SwiftData (on-device, with graceful fallback)
 - **Charts:** Swift Charts
-- **AI/Vision:** OpenAI GPT-5 Mini Vision API
-- **Concurrency:** Swift async/await
+- **AI/Vision:** OpenAI Responses API (o3 for vision, gpt-4o-mini for food search)
+- **Security:** iOS Keychain for API key storage
+- **Concurrency:** Swift async/await with Actor isolation
 
 ## How It Works
 
-1. **Capture**: Take a photo of your food or select from your photo library
-2. **Analyze**: The image is compressed and sent to OpenAI's vision model
-3. **Review**: See detected food items with calorie estimates and confidence levels
-4. **Adjust**: Fine-tune the estimates if needed using sliders
-5. **Save**: Store the meal with all nutritional data
-6. **Track**: View your progress on the dashboard and history
+1. **Capture** — Take a photo of your food or select from your photo library
+2. **Analyze** — The image is compressed and sent to OpenAI's vision model for identification
+3. **Review** — See detected food items with calorie estimates, confidence levels, and full nutrition data
+4. **Adjust** — Fine-tune estimates with sliders or edit individual items inline
+5. **Save** — Store the meal with all nutritional data locally on your device
+6. **Track** — View your progress on the dashboard with charts and analytics
+
+Or skip the camera and **manually log** foods by searching the built-in database of 9,600+ items.
 
 ## Data Privacy
 
 - All meal data is stored locally on your device using SwiftData
 - Images are compressed and stored on-device
-- Only food images are sent to the OpenAI API for analysis
-- No personal data is collected or transmitted
+- Only food images are sent to the OpenAI API for analysis — no personal data
+- API keys are stored securely in the iOS Keychain (device-only, no iCloud sync)
+- No tracking or analytics SDKs
+- [Privacy Policy](https://mfaizanshaikh.wordpress.com/2026/02/27/privacy-policy-ai-calorie-coach/)
 
 ## Contributing
 
@@ -155,4 +162,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

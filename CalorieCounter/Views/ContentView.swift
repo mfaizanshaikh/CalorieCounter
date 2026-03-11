@@ -1,9 +1,7 @@
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
     @State private var selectedTab = 0
-    @ObservedObject private var settings = UserSettings.shared
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -32,12 +30,6 @@ struct ContentView: View {
                 .tag(3)
         }
         .tint(.green)
-        .onAppear {
-            // Show settings tab if no API key is configured
-            if !settings.hasAPIKey && !settings.hasCompletedOnboarding {
-                selectedTab = 3
-            }
-        }
     }
 }
 

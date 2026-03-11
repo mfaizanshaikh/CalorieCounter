@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 // MARK: - Local Food Entry (JSON model, used only for pre-filling)
 
@@ -108,6 +109,11 @@ private struct AIFoodResponse: Decodable {
 
 actor FoodSearchService {
     static let shared = FoodSearchService()
+
+    private let proxyBaseURL = "https://calorie-counter-proxy.mfaizan-shaikh.workers.dev/v1/responses"
+    private let directBaseURL = "https://api.openai.com/v1/responses"
+    private let bundleID = Bundle.main.bundleIdentifier ?? "com.mfaizanshaikh.caloriecounter"
+
     private init() {}
 
     // MARK: - Bundled Food Loader (for pre-fill)
@@ -129,8 +135,8 @@ actor FoodSearchService {
     /// Queries gpt-4o-mini for food nutrition data. Returns up to 7 results.
     /// Only called when the user explicitly taps "Search Online".
     func searchWithAI(query: String, excluding names: [String] = []) async throws -> [FoodSearchResult] {
-        let apiKey = UserSettings.openAIAPIKey
-        guard !apiKey.isEmpty else { throw FoodSearchError.noAPIKey }
+        let userOwnKey = UserSettings.openAIAPIKey
+        let useDirectAPI = !userOwnKey.isEmpty
 
         let excludeNote = names.isEmpty ? "" : " Do not include: \(names.prefix(10).joined(separator: ", "))."
         let userPrompt = """
@@ -139,7 +145,8 @@ actor FoodSearchService {
         All nutrient values must be numbers. serving_label is a string like "1 cup" or "100 g".
         """
 
-        guard let url = URL(string: "https://api.openai.com/v1/responses") else {
+        let urlString = useDirectAPI ? directBaseURL : proxyBaseURL
+        guard let url = URL(string: urlString) else {
             throw FoodSearchError.invalidURL
         }
 
@@ -155,9 +162,16 @@ actor FoodSearchService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 25
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        if useDirectAPI {
+            request.setValue("Bearer \(userOwnKey)", forHTTPHeaderField: "Authorization")
+        } else {
+            request.setValue(bundleID, forHTTPHeaderField: "X-Bundle-ID")
+            let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            request.setValue(deviceId, forHTTPHeaderField: "X-Device-ID")
+        }
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -260,11 +274,10 @@ actor FoodSearchService {
     // MARK: - Errors
 
     enum FoodSearchError: LocalizedError {
-        case noAPIKey, invalidURL, httpError, emptyResponse, parseFailed
+        case invalidURL, httpError, emptyResponse, parseFailed
 
         var errorDescription: String? {
             switch self {
-            case .noAPIKey:     return "Add an API key in Settings to search online."
             case .invalidURL:   return "Invalid URL."
             case .httpError:    return "Server error. Try again."
             case .emptyResponse: return "No response from AI."

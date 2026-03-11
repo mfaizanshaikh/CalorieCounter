@@ -32,12 +32,12 @@ struct SettingsView: View {
                     viewModel.removeAPIKey()
                 }
             } message: {
-                Text("This will remove your OpenAI API key. Food analysis will be unavailable until you add a new key.")
+                Text("This will remove your custom API key. The app will switch back to the built-in service.")
             }
         }
     }
 
-    // MARK: - API Key Section
+    // MARK: - API Key Section (Optional — for users who want their own key)
     private var apiKeySection: some View {
         Section {
             if viewModel.hasAPIKey {
@@ -47,7 +47,7 @@ struct SettingsView: View {
                         .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("API Key Configured")
+                        Text("Using Your Own API Key")
                             .font(.body)
                         Text(viewModel.maskedAPIKey)
                             .font(.caption)
@@ -79,12 +79,12 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("OpenAI API Key")
+            Text("Custom API Key (Optional)")
         } footer: {
             if viewModel.hasAPIKey {
-                Text("Your API key is stored securely in the device Keychain and is never shared.")
+                Text("Using your own OpenAI API key. Remove it to switch back to the built-in service.")
             } else {
-                Text("Required for AI food analysis. Get your key at platform.openai.com. Stored securely in the device Keychain.")
+                Text("AI food analysis works out of the box. Optionally add your own OpenAI API key for unlimited usage.")
             }
         }
     }
