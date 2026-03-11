@@ -64,6 +64,10 @@ GoogleService-Info.plist
 .env
 .env.*
 
+# Proxy servers (contain infrastructure details)
+php-proxy/
+cloudflare-proxy/
+
 # Large ML model files
 *.gguf
 
