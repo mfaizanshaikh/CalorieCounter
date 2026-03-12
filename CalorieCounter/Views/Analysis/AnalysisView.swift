@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import StoreKit
 
 struct AnalysisView: View {
     let image: UIImage
@@ -7,6 +8,7 @@ struct AnalysisView: View {
     let onDismiss: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.requestReview) private var requestReview
     @State private var showingSaveSuccess = false
     @FocusState private var isCalorieFieldFocused: Bool
     @ScaledMetric private var caloriesFontSize: CGFloat = 48
@@ -255,6 +257,9 @@ struct AnalysisView: View {
     private var saveButton: some View {
         Button {
             if viewModel.saveMealEntry(image: image, to: modelContext) != nil {
+                if AppReviewManager.recordFoodLogAndCheckReview() {
+                    requestReview()
+                }
                 showingSaveSuccess = true
             }
         } label: {

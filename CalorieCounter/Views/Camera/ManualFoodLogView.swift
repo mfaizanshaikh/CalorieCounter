@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import StoreKit
 
 // MARK: - Main View
 
@@ -9,6 +10,7 @@ struct ManualFoodLogView: View {
     @StateObject private var viewModel = ManualFoodLogViewModel()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
 
     @State private var showingSaveSuccess = false
     @State private var quantitySheetFood: FoodSearchResult?
@@ -271,6 +273,9 @@ struct ManualFoodLogView: View {
         Button {
             let success = viewModel.saveMeal(to: modelContext)
             if success {
+                if AppReviewManager.recordFoodLogAndCheckReview() {
+                    requestReview()
+                }
                 showingSaveSuccess = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                     dismiss()

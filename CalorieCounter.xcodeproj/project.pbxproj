@@ -33,6 +33,7 @@
 		001122330000000000000044 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000054 /* SettingsView.swift */; };
 		001122330000000000000045 /* TodayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000055 /* TodayDetailView.swift */; };
 		001122330000000000000046 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000056 /* KeychainHelper.swift */; };
+		001122330000000000000703 /* AppReviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000702 /* AppReviewManager.swift */; };
 		001122330000000000000047 /* NutritionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000057 /* NutritionSummaryView.swift */; };
 		001122330000000000000061 /* FoodDatabase.json in Resources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000060 /* FoodDatabase.json */; };
 		001122330000000000000063 /* FoodSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000062 /* FoodSearchService.swift */; };
@@ -70,6 +71,7 @@
 		001122330000000000000054 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		001122330000000000000055 /* TodayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayDetailView.swift; sourceTree = "<group>"; };
 		001122330000000000000056 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		001122330000000000000702 /* AppReviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppReviewManager.swift; sourceTree = "<group>"; };
 		001122330000000000000057 /* NutritionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionSummaryView.swift; sourceTree = "<group>"; };
 		001122330000000000000060 /* FoodDatabase.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FoodDatabase.json; sourceTree = "<group>"; };
 		001122330000000000000062 /* FoodSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodSearchService.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 				001122330000000000000038 /* ImageProcessor.swift */,
 				001122330000000000000039 /* DateExtensions.swift */,
 				001122330000000000000056 /* KeychainHelper.swift */,
+				001122330000000000000702 /* AppReviewManager.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -338,6 +341,7 @@
 				001122330000000000000044 /* SettingsView.swift in Sources */,
 				001122330000000000000045 /* TodayDetailView.swift in Sources */,
 				001122330000000000000046 /* KeychainHelper.swift in Sources */,
+				001122330000000000000703 /* AppReviewManager.swift in Sources */,
 				001122330000000000000047 /* NutritionSummaryView.swift in Sources */,
 				001122330000000000000063 /* FoodSearchService.swift in Sources */,
 				001122330000000000000065 /* ManualFoodLogViewModel.swift in Sources */,
@@ -493,7 +497,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mfaizanshaikh.caloriecounter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -527,7 +531,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mfaizanshaikh.caloriecounter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
