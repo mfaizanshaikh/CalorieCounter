@@ -21,6 +21,7 @@
 		001122330000000000000022 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000032 /* HistoryViewModel.swift */; };
 		001122330000000000000023 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000033 /* CameraView.swift */; };
 		001122330000000000000024 /* AnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000034 /* AnalysisView.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* AnalysisLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* AnalysisLoadingView.swift */; };
 		001122330000000000000025 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000035 /* DashboardView.swift */; };
 		001122330000000000000026 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000036 /* HistoryView.swift */; };
 		001122330000000000000027 /* MealDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000000037 /* MealDetailView.swift */; };
@@ -59,6 +60,7 @@
 		001122330000000000000032 /* HistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModel.swift; sourceTree = "<group>"; };
 		001122330000000000000033 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		001122330000000000000034 /* AnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F3 /* AnalysisLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisLoadingView.swift; sourceTree = "<group>"; };
 		001122330000000000000035 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		001122330000000000000036 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		001122330000000000000037 /* MealDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealDetailView.swift; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				001122330000000000000034 /* AnalysisView.swift */,
+				A1B2C3D4E5F6A7B8C9D0E1F3 /* AnalysisLoadingView.swift */,
 			);
 			path = Analysis;
 			sourceTree = "<group>";
@@ -330,6 +333,7 @@
 				001122330000000000000022 /* HistoryViewModel.swift in Sources */,
 				001122330000000000000023 /* CameraView.swift in Sources */,
 				001122330000000000000024 /* AnalysisView.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* AnalysisLoadingView.swift in Sources */,
 				001122330000000000000025 /* DashboardView.swift in Sources */,
 				001122330000000000000026 /* HistoryView.swift in Sources */,
 				001122330000000000000027 /* MealDetailView.swift in Sources */,

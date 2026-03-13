@@ -51,27 +51,49 @@ struct AnalysisView: View {
     }
 
     private var imageSection: some View {
-        Image(uiImage: image)
-            .resizable()
-            .scaledToFit()
-            .frame(maxHeight: 200)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+        ZStack {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 250)
+
+            if viewModel.isAnalyzing {
+                ScanningOverlayView()
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    viewModel.isAnalyzing ? Color.green.opacity(0.6) : Color.clear,
+                    lineWidth: 1.5
+                )
+        )
+        .animation(.easeInOut(duration: 0.3), value: viewModel.isAnalyzing)
     }
 
     private var analyzingSection: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.5)
+        VStack(spacing: 24) {
+            // AI thinking header
+            HStack(spacing: 8) {
+                Image(systemName: "brain.head.profile.fill")
+                    .foregroundStyle(.green)
+                Text("AI is analyzing your food")
+                    .font(.headline)
+            }
 
-            Text("Analyzing your food...")
-                .font(.headline)
+            // Step-by-step progress
+            AnalysisStepProgressView()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
 
-            Text("This may take a moment")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Divider()
+
+            // Health tips carousel
+            HealthTipCarouselView()
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, 12)
     }
 
     private func resultSection(_ result: CalorieEstimation) -> some View {
