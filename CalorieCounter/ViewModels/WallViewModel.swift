@@ -23,11 +23,12 @@ final class WallViewModel: ObservableObject {
         do {
             posts = try await service.fetchPosts(sort: sortMode)
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
     func refresh() async {
+        guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -35,7 +36,7 @@ final class WallViewModel: ObservableObject {
         do {
             posts = try await service.fetchPosts(sort: sortMode)
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
@@ -57,7 +58,7 @@ final class WallViewModel: ObservableObject {
             posts.removeAll { $0.id == post.id }
             actionMessage = "Post reported."
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
@@ -67,7 +68,7 @@ final class WallViewModel: ObservableObject {
             posts.removeAll { $0.userId == post.userId }
             actionMessage = "\(post.authorFirstName) blocked."
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
@@ -77,7 +78,7 @@ final class WallViewModel: ObservableObject {
             posts.removeAll { $0.id == post.id }
             actionMessage = "Post deleted."
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
@@ -91,7 +92,36 @@ final class WallViewModel: ObservableObject {
             posts[index].likeCount = state.likeCount
             posts[index].isLiked = state.isLiked
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
+    }
+
+    private func handle(_ error: Error) {
+        guard !error.isCancellation else { return }
+        errorMessage = error.localizedDescription
+    }
+}
+
+private extension Error {
+    var isCancellation: Bool {
+        if self is CancellationError {
+            return true
+        }
+
+        if let urlError = self as? URLError {
+            return urlError.code == .cancelled
+        }
+
+        if let apiError = self as? APIError {
+            switch apiError {
+            case .transport(let error):
+                return error.isCancellation
+            default:
+                return false
+            }
+        }
+
+        let nsError = self as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
     }
 }

@@ -95,6 +95,5 @@ PHP is not installed locally; the backend can only be smoke-tested after upload 
 
 ## Claude Code specific rules
 
-- Follow the Git workflow from AGENTS.md.
 - Use plan mode before large changes.
 - If a task affects authentication, payments, user data, privacy, database schema, or public APIs, explain the risk before implementing.
