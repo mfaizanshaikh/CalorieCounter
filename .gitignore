@@ -11,6 +11,9 @@ DerivedData/
 *.xcuserstate
 *.xcuserdata/
 
+# Local agent/tool state
+.claude/
+
 # Workspace settings
 *.xcworkspace/xcuserdata/
 
