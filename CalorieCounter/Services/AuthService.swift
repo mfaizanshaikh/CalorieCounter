@@ -14,18 +14,27 @@ final class AuthService: ObservableObject {
 
     @Published private(set) var currentUser: RemoteUser?
     @Published private(set) var isAuthenticated: Bool = false
+    @Published private(set) var isRestoringSession: Bool
     @Published private(set) var isSigningIn: Bool = false
     @Published var lastError: String?
 
     private init() {
-        Task { await APIClient.shared.configure(
+        self.isRestoringSession = KeychainHelper.load(for: BackendConfig.KeychainKey.refreshToken) != nil
+
+        Task { [weak self] in
+            await self?.configureAPIClient()
+        }
+    }
+
+    private func configureAPIClient() async {
+        await APIClient.shared.configure(
             baseURL: BackendConfig.baseURL,
             accessTokenProvider: { [weak self] in await self?.accessToken() },
             refreshHandler: { [weak self] in
                 guard let self else { throw AuthError.notSignedIn }
                 return try await self.refreshAccessToken()
             }
-        ) }
+        )
     }
 
     // MARK: - Public state
@@ -42,9 +51,17 @@ final class AuthService: ObservableObject {
     /// Called from app start. If we have a refresh token, fetch the cached
     /// user via /auth/me; the APIClient will refresh the access token if needed.
     func restoreSession() async {
+        await configureAPIClient()
+
         guard KeychainHelper.load(for: BackendConfig.KeychainKey.refreshToken) != nil else {
+            self.currentUser = nil
+            self.isAuthenticated = false
+            self.isRestoringSession = false
             return
         }
+
+        self.isRestoringSession = true
+        defer { self.isRestoringSession = false }
 
         do {
             let user: RemoteUser = try await APIClient.shared.get("auth/me")
@@ -56,6 +73,8 @@ final class AuthService: ObservableObject {
             SyncCoordinator.shared.triggerSync(pullFirst: true)
         } catch {
             // If /auth/me fails (revoked refresh token etc.), leave unauthenticated.
+            self.currentUser = nil
+            self.isAuthenticated = false
             #if DEBUG
             print("[AuthService] restoreSession failed: \(error)")
             #endif
@@ -240,6 +259,7 @@ final class AuthService: ObservableObject {
         KeychainHelper.delete(for: BackendConfig.KeychainKey.userId)
         self.currentUser = nil
         self.isAuthenticated = false
+        self.isRestoringSession = false
     }
 }
 
