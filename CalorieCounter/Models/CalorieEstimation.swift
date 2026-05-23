@@ -11,6 +11,58 @@ struct CalorieEstimation: Codable {
     enum EstimationStatus: String, Codable {
         case foodDetected = "food_detected"
         case noFoodDetected = "no_food_detected"
+
+        init(from decoder: Decoder) throws {
+            // Be lenient: the model occasionally returns variants like "detected",
+            // "found", "no_food", uppercase, or wraps it in quotes. Map any
+            // explicit "no food" signal to .noFoodDetected; default to
+            // .foodDetected so the rest of the response (with actual food
+            // entries) still flows through.
+            let raw = (try? decoder.singleValueContainer().decode(String.self))?
+                .lowercased()
+                .trimmingCharacters(in: .whitespaces) ?? ""
+            if raw.contains("no_food") || raw.contains("no food") || raw == "none" || raw == "empty" {
+                self = .noFoodDetected
+            } else {
+                self = .foodDetected
+            }
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case status, foods, assumptions
+        case totalCaloriesMin, totalCaloriesMax, totalCaloriesAvg
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = (try? container.decode(EstimationStatus.self, forKey: .status)) ?? .foodDetected
+        foods = (try? container.decode([EstimatedFood].self, forKey: .foods)) ?? []
+        assumptions = (try? container.decode([String].self, forKey: .assumptions)) ?? []
+
+        let minFromFoods = foods.reduce(0) { $0 + $1.caloriesMin }
+        let maxFromFoods = foods.reduce(0) { $0 + $1.caloriesMax }
+        let avgFromFoods = foods.reduce(0) { $0 + $1.caloriesAvg }
+
+        totalCaloriesMin = LenientNumber.int(from: container, key: .totalCaloriesMin) ?? minFromFoods
+        totalCaloriesMax = LenientNumber.int(from: container, key: .totalCaloriesMax) ?? maxFromFoods
+        totalCaloriesAvg = LenientNumber.int(from: container, key: .totalCaloriesAvg) ?? avgFromFoods
+    }
+
+    init(
+        status: EstimationStatus,
+        foods: [EstimatedFood],
+        assumptions: [String],
+        totalCaloriesMin: Int,
+        totalCaloriesMax: Int,
+        totalCaloriesAvg: Int
+    ) {
+        self.status = status
+        self.foods = foods
+        self.assumptions = assumptions
+        self.totalCaloriesMin = totalCaloriesMin
+        self.totalCaloriesMax = totalCaloriesMax
+        self.totalCaloriesAvg = totalCaloriesAvg
     }
 
     struct EstimatedFood: Codable {
@@ -45,22 +97,31 @@ struct CalorieEstimation: Codable {
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            name = try container.decode(String.self, forKey: .name)
-            portionSize = try container.decode(String.self, forKey: .portionSize)
-            caloriesMin = try container.decode(Int.self, forKey: .caloriesMin)
-            caloriesMax = try container.decode(Int.self, forKey: .caloriesMax)
-            caloriesAvg = try container.decode(Int.self, forKey: .caloriesAvg)
-            confidence = try container.decode(Double.self, forKey: .confidence)
-            protein = try container.decodeIfPresent(Double.self, forKey: .protein)
-            carbs = try container.decodeIfPresent(Double.self, forKey: .carbs)
-            fat = try container.decodeIfPresent(Double.self, forKey: .fat)
-            fiber = try container.decodeIfPresent(Double.self, forKey: .fiber)
-            sugar = try container.decodeIfPresent(Double.self, forKey: .sugar)
-            saturatedFat = try container.decodeIfPresent(Double.self, forKey: .saturatedFat)
-            transFat = try container.decodeIfPresent(Double.self, forKey: .transFat)
-            cholesterol = try container.decodeIfPresent(Double.self, forKey: .cholesterol)
-            sodium = try container.decodeIfPresent(Double.self, forKey: .sodium)
-            potassium = try container.decodeIfPresent(Double.self, forKey: .potassium)
+            name = (try? container.decode(String.self, forKey: .name)) ?? "Unknown food"
+            portionSize = (try? container.decode(String.self, forKey: .portionSize)) ?? ""
+
+            let rawMin = LenientNumber.int(from: container, key: .caloriesMin)
+            let rawMax = LenientNumber.int(from: container, key: .caloriesMax)
+            let rawAvg = LenientNumber.int(from: container, key: .caloriesAvg)
+
+            // Backfill missing calorie fields from whichever sibling is present
+            // so a partial response still produces a sensible row.
+            let resolvedAvg = rawAvg ?? rawMin ?? rawMax ?? 0
+            caloriesAvg = resolvedAvg
+            caloriesMin = rawMin ?? resolvedAvg
+            caloriesMax = rawMax ?? resolvedAvg
+
+            confidence = LenientNumber.double(from: container, key: .confidence) ?? 0.7
+            protein = LenientNumber.double(from: container, key: .protein)
+            carbs = LenientNumber.double(from: container, key: .carbs)
+            fat = LenientNumber.double(from: container, key: .fat)
+            fiber = LenientNumber.double(from: container, key: .fiber)
+            sugar = LenientNumber.double(from: container, key: .sugar)
+            saturatedFat = LenientNumber.double(from: container, key: .saturatedFat)
+            transFat = LenientNumber.double(from: container, key: .transFat)
+            cholesterol = LenientNumber.double(from: container, key: .cholesterol)
+            sodium = LenientNumber.double(from: container, key: .sodium)
+            potassium = LenientNumber.double(from: container, key: .potassium)
         }
 
         init(name: String, portionSize: String, caloriesMin: Int, caloriesMax: Int, caloriesAvg: Int, confidence: Double, protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, fiber: Double? = nil, sugar: Double? = nil, saturatedFat: Double? = nil, transFat: Double? = nil, cholesterol: Double? = nil, sodium: Double? = nil, potassium: Double? = nil) {
@@ -167,24 +228,97 @@ extension CalorieEstimation {
 
 extension CalorieEstimation {
     static func parse(from jsonString: String) -> CalorieEstimation? {
-        // Sanitize the JSON to fix common model hallucinations
-        let sanitizedJson = sanitizeJson(jsonString)
-
-        guard let data = sanitizedJson.data(using: .utf8) else { return nil }
-
         let decoder = JSONDecoder()
-        do {
-            return try decoder.decode(CalorieEstimation.self, from: data)
-        } catch {
+        let candidates = [
+            sanitizeJson(jsonString),
+            jsonString,
+            sanitizeJson(repairTruncatedJson(jsonString)),
+            repairTruncatedJson(jsonString)
+        ]
+
+        for (idx, candidate) in candidates.enumerated() {
+            guard let data = candidate.data(using: .utf8) else { continue }
+            do {
+                return try decoder.decode(CalorieEstimation.self, from: data)
+            } catch {
 #if DEBUG
-            print("Failed to parse CalorieEstimation: \(error)")
+                if idx == candidates.count - 1 {
+                    print("Failed to parse CalorieEstimation after all attempts: \(error)")
+                }
 #endif
-            // Try with original string as fallback
-            if let originalData = jsonString.data(using: .utf8) {
-                return try? decoder.decode(CalorieEstimation.self, from: originalData)
+                continue
             }
-            return nil
         }
+        return nil
+    }
+
+    /// Attempts to repair JSON that was cut off mid-output (e.g. when the model
+    /// hits its token cap). Strips a trailing partial token after the last comma,
+    /// then appends matching `]` / `}` for unclosed arrays/objects so the
+    /// decoder can at least recover the foods that did finish.
+    private static func repairTruncatedJson(_ json: String) -> String {
+        var s = json.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if s.hasSuffix(",") { s.removeLast() }
+
+        // Walk the string to compute unmatched `{` / `[`, ignoring chars inside
+        // strings or escaped sequences. If we end mid-string, drop everything
+        // back to the last structural boundary.
+        var stack: [Character] = []
+        var inString = false
+        var escape = false
+        var lastSafeIndex = s.startIndex
+
+        for i in s.indices {
+            let ch = s[i]
+            if escape { escape = false; continue }
+            if ch == "\\" { escape = true; continue }
+            if ch == "\"" { inString.toggle(); continue }
+            if inString { continue }
+
+            switch ch {
+            case "{", "[":
+                stack.append(ch)
+                lastSafeIndex = s.index(after: i)
+            case "}":
+                if stack.last == "{" { stack.removeLast() }
+                lastSafeIndex = s.index(after: i)
+            case "]":
+                if stack.last == "[" { stack.removeLast() }
+                lastSafeIndex = s.index(after: i)
+            case ",", ":":
+                lastSafeIndex = s.index(after: i)
+            default:
+                break
+            }
+        }
+
+        if inString {
+            // Truncate at the last safe structural boundary so we drop the
+            // incomplete string literal entirely.
+            s = String(s[..<lastSafeIndex])
+            if s.hasSuffix(",") { s.removeLast() }
+            // Recompute the stack on the truncated prefix.
+            stack.removeAll()
+            inString = false
+            escape = false
+            for ch in s {
+                if escape { escape = false; continue }
+                if ch == "\\" { escape = true; continue }
+                if ch == "\"" { inString.toggle(); continue }
+                if inString { continue }
+                if ch == "{" || ch == "[" { stack.append(ch) }
+                else if ch == "}" && stack.last == "{" { stack.removeLast() }
+                else if ch == "]" && stack.last == "[" { stack.removeLast() }
+            }
+        }
+
+        // Close any still-open structures (most-recent-open first).
+        while let open = stack.popLast() {
+            s.append(open == "{" ? "}" : "]")
+        }
+
+        return s
     }
 
     /// Sanitizes JSON response from AI model to fix common hallucinations
@@ -277,5 +411,62 @@ extension CalorieEstimation {
         }
 
         return result
+    }
+}
+
+/// Decoders that accept numeric values encoded as Int, Double, *or* String
+/// (e.g. `"caloriesAvg": "150"` or `"caloriesAvg": "150-200"`). Returns nil
+/// for missing/null/unparseable fields so callers can supply a fallback.
+enum LenientNumber {
+    static func int<K: CodingKey>(
+        from container: KeyedDecodingContainer<K>,
+        key: K
+    ) -> Int? {
+        if let v = try? container.decodeIfPresent(Int.self, forKey: key) { return v }
+        if let v = try? container.decodeIfPresent(Double.self, forKey: key) { return Int(v.rounded()) }
+        if let s = try? container.decodeIfPresent(String.self, forKey: key) { return parseInt(s) }
+        return nil
+    }
+
+    static func double<K: CodingKey>(
+        from container: KeyedDecodingContainer<K>,
+        key: K
+    ) -> Double? {
+        if let v = try? container.decodeIfPresent(Double.self, forKey: key) { return v }
+        if let v = try? container.decodeIfPresent(Int.self, forKey: key) { return Double(v) }
+        if let s = try? container.decodeIfPresent(String.self, forKey: key) { return parseDouble(s) }
+        return nil
+    }
+
+    private static func parseInt(_ s: String) -> Int? {
+        let cleaned = numericPrefix(of: s)
+        if let i = Int(cleaned) { return i }
+        if let d = Double(cleaned) { return Int(d.rounded()) }
+        return nil
+    }
+
+    private static func parseDouble(_ s: String) -> Double? {
+        Double(numericPrefix(of: s))
+    }
+
+    /// Pulls the leading numeric token out of strings like "150", "150 kcal",
+    /// "150-200" (takes the lower bound), or "~150".
+    private static func numericPrefix(of s: String) -> String {
+        let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        var out = ""
+        var seenDot = false
+        for ch in trimmed {
+            if ch.isNumber {
+                out.append(ch)
+            } else if ch == "." && !seenDot {
+                out.append(ch)
+                seenDot = true
+            } else if (ch == "-" || ch == "+") && out.isEmpty {
+                out.append(ch)
+            } else {
+                break
+            }
+        }
+        return out
     }
 }

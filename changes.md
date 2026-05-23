@@ -4,6 +4,36 @@ Running log of changes made to AI Calorie Coach. Newest entry on top. Each entry
 
 ---
 
+## 2026-05-23 — Stop showing "Analysis Failed: Failed to parse nutritional data"
+
+**Why:** Multiple App Store reviews complained that the camera analysis flow fails with the red "Analysis Failed — Analysis error: Failed to parse nutritional data" error (see Error.jpg). Root cause is in `OpenAIService.analyzeFood` + `CalorieEstimation.parse`:
+
+1. The primary model is `o3`, a reasoning model whose `max_output_tokens` budget is shared between reasoning tokens and the final structured output. With the previous `max_output_tokens: 16384` and no reasoning-effort cap, a non-trivial fraction of requests spend most of the budget on internal reasoning and the JSON body either comes back empty or truncated mid-array. The decoder then throws `parsingFailed`, which surfaces as "Failed to parse nutritional data".
+2. The decoder was strict — any deviation from the prompt (number returned as `"150"` string, missing `confidence`, `caloriesAvg` returned as `150.5`, unknown status value, prose around the JSON) tripped a hard decode failure.
+3. There was no fallback path if the model misbehaved, so the user just saw an error and a Try Again button that often produced the same failure on retry.
+
+### Changes
+- `CalorieCounter/Services/OpenAIService.swift`
+  - Added `OpenAIReasoningConfig` and wired `reasoning: { effort: "low" }` into the primary `o3` request. Reasoning effort `low` is the documented knob for telling the Responses API to cap reasoning-token spend, which is what was eating the budget. Also lowered `max_output_tokens` to 8192 (more than the JSON needs, less for the model to run wild with).
+  - Added a fallback path: if the primary `o3` call throws `emptyResponse` or `parsingFailed`, retry the same input against `gpt-4o-mini` (non-reasoning, vision-capable, far more reliable at emitting compact JSON). Network/auth/HTTP errors still propagate as-is — we only fall back on output-shape failures so we don't double-bill or hide real errors.
+  - Replaced the inline fence-stripping with a `extractJSON(from:)` helper that progressively cleans the response: strip ``` fences, then take the substring from the first `{` to the last `}`. Handles cases where the model prefaces or suffixes the JSON with prose ("Sure, here's the analysis: { … }. Let me know if you have questions.").
+- `CalorieCounter/Models/CalorieEstimation.swift`
+  - Custom `init(from:)` for the top-level struct: missing/null `foods`, `assumptions`, `totalCalories*` no longer fail the whole decode — totals back-fill from the per-food sum when omitted, optional collections default to empty.
+  - Custom `init(from:)` for `EstimatedFood`: `name` defaults to "Unknown food", `confidence` defaults to 0.7 when missing, and a `LenientNumber` helper accepts numeric fields encoded as Int, Double, *or* String (including "150 kcal", "150-200", "~150"). Missing calorie fields back-fill from each other so a row with only `caloriesAvg` is still usable.
+  - Lenient `EstimationStatus` decoder: still maps any explicit "no food" / "none" / "empty" signal to `.noFoodDetected`, but defaults to `.foodDetected` for anything else (rather than throwing on an unrecognized variant like `"detected"` or `"food_found"`).
+  - New `repairTruncatedJson` step in `parse(from:)`: if normal decoding fails, walk the string to find the last safe structural boundary (closing matched `[`/`{` we already saw), drop any mid-string truncation, and close any still-open brackets. Tries this both with and without the existing word-number sanitizer, so we get up to four parse attempts before giving up. Salvages partial foods from a response cut off mid-output rather than discarding everything.
+
+### What this fixes
+- Drops the "Failed to parse nutritional data" rate dramatically — the most common cause (reasoning-budget starvation on `o3`) is addressed by the effort cap; the second most common (slightly off-spec JSON) is addressed by the lenient decoders; the remaining tail is caught by the gpt-4o-mini fallback.
+- Even when the primary model genuinely produces something we can't read, the user now sees a successful analysis from the fallback model instead of a red error screen with no recourse.
+
+### Follow-up the user has to do
+- Test the camera flow end-to-end on a real device before shipping — confirm a normal analysis still completes with the new reasoning-effort cap (it should be slightly *faster* than before since we're not spending as many tokens on reasoning).
+- If the proxy at `mfaizanshaikh.com/ai-calorie-coach/php-proxy/index.php` does any model allow-listing, make sure `gpt-4o-mini` is on the list — otherwise the fallback will 4xx and we'll still surface an error.
+- Watch App Store reviews after the next release lands; if "Analysis Failed" complaints persist, capture the underlying response (the DEBUG print added in `parseResponse` is preserved) and consider promoting `gpt-4o-mini` to primary.
+
+---
+
 ## 2026-05-23 — Fix `SQLSTATE[HY093]: Invalid parameter number` on sync
 
 **Why:** After the `uploads_dir` fix landed, the Settings screen surfaced `Sync failed: Server error (500): SQLSTATE[HY093]: Invalid parameter number`. Five upserts in the codebase (`routes/meals.php`, `routes/saved_foods.php`, `routes/settings.php`, plus the meals / saved_foods / user_settings upserts in `routes/migrate_bulk.php`) use `INSERT … ON DUPLICATE KEY UPDATE` and reuse the same named placeholders (`:d`, `:mt`, `:p`, etc.) on both sides of the statement. With `PDO::ATTR_EMULATE_PREPARES => false`, some shared-host PHP/PDO_MySQL builds (notably PHP < 8.1) reject placeholder reuse with HY093. PHP 8.1+ generally allows it, but the user's Hostinger PHP build is throwing the error, so we can't rely on the runtime supporting reuse.

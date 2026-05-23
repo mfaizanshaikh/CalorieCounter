@@ -6,11 +6,16 @@ struct OpenAIResponsesRequest: Encodable {
     let model: String
     let input: [OpenAIInputMessage]
     let maxOutputTokens: Int?
+    let reasoning: OpenAIReasoningConfig?
 
     enum CodingKeys: String, CodingKey {
-        case model, input
+        case model, input, reasoning
         case maxOutputTokens = "max_output_tokens"
     }
+}
+
+struct OpenAIReasoningConfig: Encodable {
+    let effort: String  // "low" | "medium" | "high" — only honored by reasoning models
 }
 
 struct OpenAIInputMessage: Encodable {
@@ -114,6 +119,7 @@ actor OpenAIService {
     private let proxyBaseURL = "https://mfaizanshaikh.com/ai-calorie-coach/php-proxy/index.php"
     private let directBaseURL = "https://api.openai.com/v1/responses"
     private let model = "o3"
+    private let fallbackModel = "gpt-4o-mini"  // Non-reasoning fallback if o3 returns unparseable JSON
     private let bundleID = Bundle.main.bundleIdentifier ?? "com.mfaizanshaikh.caloriecounter"
 
     /// Returns the user's own API key if configured, nil otherwise (uses proxy).
@@ -183,20 +189,57 @@ actor OpenAIService {
             throw OpenAIServiceError.imageProcessingFailed
         }
 
-        let request = OpenAIResponsesRequest(
+        let input: [OpenAIInputMessage] = [
+            .system(systemPrompt),
+            .user([
+                .text(userPrompt),
+                .image(base64: base64String)
+            ])
+        ]
+
+        // First attempt: o3 with low reasoning effort so the token budget
+        // actually reaches the structured JSON output instead of being eaten
+        // by reasoning tokens.
+        let primaryRequest = OpenAIResponsesRequest(
             model: model,
-            input: [
-                .system(systemPrompt),
-                .user([
-                    .text(userPrompt),
-                    .image(base64: base64String)
-                ])
-            ],
-            maxOutputTokens: 16384
+            input: input,
+            maxOutputTokens: 8192,
+            reasoning: OpenAIReasoningConfig(effort: "low")
         )
 
-        let response = try await makeRequest(request)
-        return try parseResponse(response)
+        do {
+            let response = try await makeRequest(primaryRequest)
+            return try parseResponse(response)
+        } catch let primaryError {
+            // Only retry on parse / empty / image-text errors. Network and auth
+            // failures should propagate as-is.
+            guard shouldFallback(on: primaryError) else { throw primaryError }
+
+#if DEBUG
+            print("Primary model (\(model)) failed (\(primaryError.localizedDescription)) — retrying with \(fallbackModel)")
+#endif
+
+            let fallbackRequest = OpenAIResponsesRequest(
+                model: fallbackModel,
+                input: input,
+                maxOutputTokens: 4096,
+                reasoning: nil
+            )
+
+            let fallbackResponse = try await makeRequest(fallbackRequest)
+            return try parseResponse(fallbackResponse)
+        }
+    }
+
+    private func shouldFallback(on error: Error) -> Bool {
+        guard let svcError = error as? OpenAIServiceError else { return false }
+        switch svcError {
+        case .emptyResponse, .parsingFailed:
+            return true
+        case .imageProcessingFailed, .invalidURL, .invalidResponse,
+             .httpError, .apiError:
+            return false
+        }
     }
 
     private func prepareImage(_ image: UIImage) -> Data? {
@@ -338,17 +381,7 @@ actor OpenAIService {
         }
 #endif
 
-        // Strip markdown code fences if the model wraps the JSON
-        var jsonString = extractedContent.trimmingCharacters(in: .whitespacesAndNewlines)
-        if jsonString.hasPrefix("```json") {
-            jsonString = String(jsonString.dropFirst(7))
-        } else if jsonString.hasPrefix("```") {
-            jsonString = String(jsonString.dropFirst(3))
-        }
-        if jsonString.hasSuffix("```") {
-            jsonString = String(jsonString.dropLast(3))
-        }
-        jsonString = jsonString.trimmingCharacters(in: .whitespacesAndNewlines)
+        let jsonString = Self.extractJSON(from: extractedContent)
 
         guard let estimation = CalorieEstimation.parse(from: jsonString) else {
 #if DEBUG
@@ -358,6 +391,29 @@ actor OpenAIService {
         }
 
         return estimation
+    }
+
+    /// Pulls the JSON object out of a model response that may include code fences,
+    /// preamble text ("Here's the analysis: { ... }"), or trailing commentary.
+    /// Falls back progressively: strip fences → take first `{` to last `}` → return as-is.
+    static func extractJSON(from raw: String) -> String {
+        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if s.hasPrefix("```json") {
+            s = String(s.dropFirst(7))
+        } else if s.hasPrefix("```") {
+            s = String(s.dropFirst(3))
+        }
+        if s.hasSuffix("```") {
+            s = String(s.dropLast(3))
+        }
+        s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let first = s.firstIndex(of: "{"), let last = s.lastIndex(of: "}"), first < last {
+            return String(s[first...last])
+        }
+
+        return s
     }
 
     enum OpenAIServiceError: Error, LocalizedError {
