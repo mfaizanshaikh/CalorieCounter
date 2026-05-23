@@ -8,7 +8,15 @@ struct CameraView: View {
     @State private var showingAnalysis = false
     @State private var showingError = false
     @State private var showingManualLog = false
-    @Query(sort: \MealEntry.date, order: .reverse) private var entries: [MealEntry]
+    @Query private var entries: [MealEntry]
+
+    init() {
+        _entries = Query(
+            filter: MealEntry.currentUserScope(MealEntry.currentUserIdFromKeychain),
+            sort: \.date,
+            order: .reverse
+        )
+    }
 
     var body: some View {
         NavigationStack {

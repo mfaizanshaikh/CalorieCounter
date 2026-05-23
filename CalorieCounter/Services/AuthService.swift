@@ -39,22 +39,21 @@ final class AuthService: ObservableObject {
 
     // MARK: - Session restore on launch
 
-    /// Called from app start. If we have a refresh token, optimistically mark
-    /// authenticated based on the cached user; the next API call will refresh
-    /// the access token if needed.
+    /// Called from app start. If we have a refresh token, fetch the cached
+    /// user via /auth/me; the APIClient will refresh the access token if needed.
     func restoreSession() async {
-        guard
-            KeychainHelper.load(for: BackendConfig.KeychainKey.refreshToken) != nil,
-            let idString = KeychainHelper.load(for: BackendConfig.KeychainKey.userId),
-            let userId = UUID(uuidString: idString)
-        else { return }
+        guard KeychainHelper.load(for: BackendConfig.KeychainKey.refreshToken) != nil else {
+            return
+        }
 
-        // We don't have the email/name cached server-side at boot — fetch them.
         do {
             let user: RemoteUser = try await APIClient.shared.get("auth/me")
             self.currentUser = user
             self.isAuthenticated = true
-            _ = userId // keep silenced; user came from the server
+            // Pull server changes on cold start. The willEnterForeground hook
+            // doesn't fire on initial launch, so without this nudge a relaunched
+            // signed-in app shows stale local state until backgrounded.
+            SyncCoordinator.shared.triggerSync(pullFirst: true)
         } catch {
             // If /auth/me fails (revoked refresh token etc.), leave unauthenticated.
             #if DEBUG
@@ -145,6 +144,9 @@ final class AuthService: ObservableObject {
         } catch { /* ignore */ }
         clearLocalAuthState()
         GIDSignIn.sharedInstance.signOut()
+        // Wipe local SwiftData + sync bookkeeping so a different account on the
+        // same device doesn't inherit the previous user's meals/saved foods.
+        SyncCoordinator.shared.resetForSignOut()
     }
 
     // MARK: - Account deletion (App Store Guideline 5.1.1(v))
@@ -155,6 +157,7 @@ final class AuthService: ObservableObject {
         try await APIClient.shared.delete("account")
         clearLocalAuthState()
         GIDSignIn.sharedInstance.signOut()
+        SyncCoordinator.shared.resetForSignOut()
     }
 
     // MARK: - Token plumbing

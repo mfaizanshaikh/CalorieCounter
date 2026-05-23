@@ -32,9 +32,13 @@ actor SyncService {
 
     /// Drain the SyncOp queue. Today this is used only for deletes (since
     /// upserts are timestamp-driven). Failed ops stay in the queue with their
-    /// `attempts` incremented; the next flush retries.
+    /// `attempts` incremented; the next flush retries after the backoff window.
     private func drainSyncOps(context: ModelContext) async throws {
-        let ops = try context.fetch(FetchDescriptor<SyncOp>())
+        let now = Date()
+        let descriptor = FetchDescriptor<SyncOp>(
+            predicate: #Predicate { $0.nextAttemptAt <= now }
+        )
+        let ops = try context.fetch(descriptor)
         for op in ops {
             do {
                 switch (op.entityType, op.opType) {
@@ -72,7 +76,10 @@ actor SyncService {
         )
         let context = ModelContext(container)
         try await applyMerge(response, ownerUserId: ownerUserId, context: context)
-        UserDefaults.standard.set(Date(), forKey: Self.lastPulledAtKey)
+        // Use the server's clock for the next "since" cutoff so client/server
+        // skew doesn't silently drop records updated during the request window.
+        let nextSince = response.serverTime ?? Date()
+        UserDefaults.standard.set(nextSince, forKey: Self.lastPulledAtKey)
     }
 
     /// First-sign-in: take all local data that doesn't have an owner, claim it
@@ -121,12 +128,14 @@ actor SyncService {
         let dirty = try context.fetch(descriptor)
         for meal in dirty where meal.ownerUserId == ownerUserId || meal.ownerUserId == nil {
             if meal.ownerUserId == nil { meal.ownerUserId = ownerUserId }
-            try await pushMeal(meal)
+            try await pushMeal(meal, context: context)
+            // Persist per-meal so a later failure doesn't lose owner-claim
+            // and photoRemoteId bookkeeping for meals already pushed.
+            try? context.save()
         }
-        try context.save()
     }
 
-    private func pushMeal(_ meal: MealEntry) async throws {
+    private func pushMeal(_ meal: MealEntry, context: ModelContext) async throws {
         // 1. Upload photo first if it's a new image we haven't synced yet.
         if let imageData = meal.imageData, meal.photoRemoteId == nil, meal.deletedAt == nil {
             struct PhotoRes: Decodable { let id: String }
@@ -136,6 +145,11 @@ actor SyncService {
                 files: [(name: "photo", filename: "\(meal.id).jpg", mimeType: "image/jpeg", data: imageData)]
             )
             meal.photoRemoteId = res.id
+            // Persist immediately so a failure in step 2 doesn't cause the
+            // next flush to upload the same photo again (leaving an orphan
+            // file on the server). The JSON envelope below will still be
+            // re-sent on retry because the meal's updatedAt is unchanged.
+            try? context.save()
         }
 
         // 2. Push the JSON envelope.
@@ -143,9 +157,8 @@ actor SyncService {
         if meal.deletedAt != nil {
             try await api.delete("meals/\(meal.id.uuidString)")
             // Physically delete after server confirms.
-            if let context = meal.modelContext {
-                context.delete(meal)
-            }
+            context.delete(meal)
+            try? context.save()
         } else {
             _ = try await api.post("meals", body: dto) as EmptyResponse
         }
@@ -166,12 +179,12 @@ actor SyncService {
             let dto = SavedFoodDTO(from: food)
             if food.deletedAt != nil {
                 try await api.delete("saved-foods/\(food.id.uuidString)")
-                if let ctx = food.modelContext { ctx.delete(food) }
+                context.delete(food)
             } else {
                 _ = try await api.post("saved-foods", body: dto) as EmptyResponse
             }
+            try? context.save()
         }
-        try context.save()
     }
 
     private func pushSettings(ownerUserId: UUID) async throws {
@@ -198,6 +211,14 @@ actor SyncService {
             if let existing {
                 // Last-write-wins: only overwrite if server is newer.
                 guard incoming.updatedAt > existing.updatedAt else { continue }
+                // Server tombstone wins → physically delete locally (cascades
+                // to food items) instead of keeping a soft-deleted shell row.
+                // Without this, tombstones accumulate forever since the @Query
+                // predicate only hides them.
+                if incoming.deletedAt != nil {
+                    context.delete(existing)
+                    continue
+                }
                 existing.date = incoming.date
                 existing.mealType = MealType(rawValue: incoming.mealType) ?? existing.mealType
                 existing.totalCaloriesMin = incoming.totalMin
@@ -205,13 +226,17 @@ actor SyncService {
                 existing.totalCaloriesAvg = incoming.totalAvg
                 existing.assumptions = incoming.assumptions ?? existing.assumptions
                 existing.updatedAt = incoming.updatedAt
-                existing.deletedAt = incoming.deletedAt
+                existing.deletedAt = nil
                 existing.photoRemoteId = incoming.photoId
                 existing.ownerUserId = ownerUserId
-                // Replace food items
+                // Replace food items — insert the fresh ones into the context
+                // explicitly so the inverse relationship is wired before save.
                 for item in existing.foodItems { context.delete(item) }
-                existing.foodItems = incoming.foodItems.map { $0.toModel() }
+                let newItems = incoming.foodItems.map { $0.toModel() }
+                for item in newItems { context.insert(item) }
+                existing.foodItems = newItems
             } else if incoming.deletedAt == nil {
+                let newItems = incoming.foodItems.map { $0.toModel() }
                 let meal = MealEntry(
                     id: incoming.id,
                     date: incoming.date,
@@ -220,7 +245,7 @@ actor SyncService {
                     totalCaloriesMax: incoming.totalMax,
                     totalCaloriesAvg: incoming.totalAvg,
                     imageData: nil,
-                    foodItems: incoming.foodItems.map { $0.toModel() },
+                    foodItems: [],
                     assumptions: incoming.assumptions ?? [],
                     ownerUserId: ownerUserId,
                     updatedAt: incoming.updatedAt,
@@ -228,6 +253,8 @@ actor SyncService {
                     photoRemoteId: incoming.photoId
                 )
                 context.insert(meal)
+                for item in newItems { context.insert(item) }
+                meal.foodItems = newItems
             }
         }
 
@@ -238,6 +265,10 @@ actor SyncService {
             let existing = try context.fetch(descriptor).first
             if let existing {
                 guard incoming.updatedAt > existing.updatedAt else { continue }
+                if incoming.deletedAt != nil {
+                    context.delete(existing)
+                    continue
+                }
                 existing.name = incoming.name
                 existing.caloriesPer100g = incoming.calPer100g
                 existing.proteinPer100g = incoming.protein
@@ -250,7 +281,7 @@ actor SyncService {
                 existing.searchCount = incoming.searchCount
                 existing.isFromAI = incoming.isFromAI
                 existing.updatedAt = incoming.updatedAt
-                existing.deletedAt = incoming.deletedAt
+                existing.deletedAt = nil
                 existing.ownerUserId = ownerUserId
             } else if incoming.deletedAt == nil {
                 let food = SavedFood(
@@ -424,4 +455,5 @@ struct SyncStateResponse: Decodable {
     let meals: [MealDTO]
     let savedFoods: [SavedFoodDTO]
     let settings: UserSettingsDTO?
+    let serverTime: Date?
 }

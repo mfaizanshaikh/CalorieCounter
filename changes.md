@@ -4,6 +4,58 @@ Running log of changes made to AI Calorie Coach. Newest entry on top. Each entry
 
 ---
 
+## 2026-05-23 — Tighten sign-out teardown + tombstone GC
+
+**Why:** Audit of the prior entry surfaced four issues that the post-login sync pass didn't address: (1) on sign-out, the only thing cancelled was the debounce timer — the in-flight `runSync` could still race the wipe and leave `state = .failed("cancelled")` after the UI had been reset; (2) `PhotoLoader`'s in-memory NSCache kept the previous user's photo bytes resident after sign-out, so a different account on the same process could see them rendered briefly until cache eviction; (3) `restoreSession()` parsed the keychain `userId` and then immediately discarded it (`_ = userId`), leftover from an earlier draft; (4) `applyMerge` set `existing.deletedAt = incoming.deletedAt` for server-side tombstones, hiding the row via the `@Query` predicate but never physically deleting it — meal rows + cascaded `FoodItem` children accumulated forever.
+
+### Changes
+- `CalorieCounter/Services/SyncCoordinator.swift` — `resetForSignOut()` now nils out `debounceTask` after cancelling it, and calls `PhotoLoader.shared.clear()` before `wipeLocalData()`. `runSync(pullFirst:)`'s `catch` block now ignores `Task.isCancelled` / `URLError.cancelled` so a sign-out mid-sync doesn't leave the UI parked on a misleading "Sync failed: cancelled" state.
+- `CalorieCounter/Services/PhotoLoader.swift` — new `clear()` method on the main-actor singleton that empties the NSCache and cancels every in-flight `Task` in `inflight`. Wired from `SyncCoordinator.resetForSignOut()`.
+- `CalorieCounter/Services/AuthService.swift` — `restoreSession()` no longer parses the keychain `userId`. The single guard now just checks for the refresh token; `/auth/me` is the source of truth for the user record, and `currentUserIdFromKeychain` (used by SwiftUI predicates) reads the keychain directly. Removed the dead `_ = userId` line.
+- `CalorieCounter/Services/SyncService.swift` — `applyMerge` now treats an incoming `deletedAt != nil` as a physical delete on the local row (cascades through `@Relationship(deleteRule: .cascade)` to food items) for both meals and saved foods, instead of writing a tombstone. The non-deleted branch explicitly resets `existing.deletedAt = nil` so a previously-tombstoned row that got un-deleted on the server (theoretical — the backend doesn't expose this today, but the merge code shouldn't assume) comes back cleanly.
+
+### Follow-ups for the user
+- None server-side.
+- After this build ships, the local SwiftData store still contains any tombstone rows the previous merge logic accumulated. They stay hidden by the `@Query` predicate and will be cleaned up on the next sign-out wipe; no migration is needed.
+
+---
+
+## 2026-05-23 — Fix post-login data sync (photos, multi-account, cold-start, polish)
+
+**Why:** Manual test after sign-in showed the History row's meal-photo slot was rendering the placeholder icon even though the meal had a photo on the server. Investigating the full post-login flow surfaced four sync bugs (one user-visible, three latent) plus a handful of correctness rough edges.
+
+### iOS — photo lazy-download
+- `CalorieCounter/Services/PhotoLoader.swift` (new) — main-actor downloader for meal photos. Pulled meals arrive with only `photoRemoteId`; the loader fetches `GET /api/photos/{id}` on demand, caches the `UIImage` in memory (NSCache, 80-entry cap), dedupes concurrent fetches, and persists the bytes back into `MealEntry.imageData` so subsequent views are instant. `updatedAt` is *not* bumped — the download is a local-only hydration and must not echo back to the server. The file also vends `MealPhotoView`, a reusable SwiftUI cell that drives `PhotoLoader` from `.task` and falls back to a configurable placeholder.
+- `CalorieCounter/Services/APIClient.swift` — added `getData(_:query:)` so the photo route can be hit for raw bytes without forcing a JSON decode path.
+- `CalorieCounter/Views/History/HistoryView.swift`, `Views/History/MealDetailView.swift`, `Views/Dashboard/TodayDetailView.swift` — three local `if let imageData = entry.imageData { … }` hand-rolled views replaced with `MealPhotoView`. The History row keeps the gray system-icon placeholder; the Today row keeps the green meal-type-icon-on-green placeholder via `placeholderForeground` / `placeholderBackground`; the detail view renders as a 250-pt hero.
+- `CalorieCounter.xcodeproj/project.pbxproj` — registered `PhotoLoader.swift` in `PBXBuildFile`, `PBXFileReference`, the `Services` `PBXGroup`, and `PBXSourcesBuildPhase` (per repo convention; the pbxproj uses traditional refs).
+
+### iOS — cold-start sync
+- `CalorieCounter/Services/AuthService.swift` — `restoreSession()` now calls `SyncCoordinator.shared.triggerSync(pullFirst: true)` after a successful `/auth/me`. The `SyncCoordinator` previously only re-synced on `willEnterForegroundNotification`, which never fires on a cold launch, so relaunching the signed-in app showed whatever was last cached locally until the user backgrounded and foregrounded.
+
+### iOS — sign-out wipe + multi-account safety
+- `CalorieCounter/Services/SyncCoordinator.swift` — `resetForSignOut()` now also clears the `sync.migration_v1_done` UserDefaults flag (so the next sign-in re-evaluates the claim-and-bulk-upload step instead of inheriting the previous user's gate), cancels the debounced sync task, and calls a new `wipeLocalData()` helper that deletes every `MealEntry`, owned/AI-sourced `SavedFood`, and queued `SyncOp` on a private `ModelContext`. Bundled foods (`ownerUserId == nil && !isFromAI && searchCount == 0`) are preserved — they re-seed from `Resources/FoodDatabase.json` on each install and are local-only by design.
+- `CalorieCounter/Services/AuthService.swift` — both `signOut()` and `deleteAccount()` now call `SyncCoordinator.shared.resetForSignOut()` so a different account on the same device starts with a clean store. Without this, every `@Query` view was unfiltered and would surface the previous user's meals and saved foods until the next pull.
+- `CalorieCounter/Models/MealEntry.swift` — added `MealEntry.currentUserScope(_:)`, a SwiftData `Predicate<MealEntry>` that filters to `ownerUserId == userId || ownerUserId == nil` and `deletedAt == nil`. The `ownerUserId == nil` clause is intentional: it covers the brief window during first-sign-in migration before pre-existing v1.2 rows get claimed. Returns a never-match predicate when no user is signed in. Also added `MealEntry.currentUserIdFromKeychain`, a nonisolated reader so SwiftUI view initializers can build the predicate without crossing into `AuthService`'s `@MainActor`.
+- `CalorieCounter/Views/History/HistoryView.swift`, `Views/Camera/CameraView.swift`, `Views/Dashboard/DashboardView.swift`, `Views/Dashboard/TodayDetailView.swift` — replaced `@Query(sort: \MealEntry.date, order: .reverse)` with an `init()` that supplies the scoped predicate. Defense-in-depth on top of the wipe, and also hides server-side soft-deletes that the merge code marks via `deletedAt`.
+
+### iOS — sync engine polish
+- `CalorieCounter/Services/SyncService.swift` — `drainSyncOps` now filters by `nextAttemptAt <= now` so the exponential-backoff math it was already computing actually gates retries; previously the cap was set but the next flush re-ran every failed op immediately.
+- `Services/SyncService.swift` — `pushMeal` now saves the `ModelContext` immediately after a successful photo upload. Previously, if the meal-JSON POST in step 2 threw, `meal.photoRemoteId = res.id` was only in memory; the next flush would re-upload the same JPEG and leave an orphan file on the server. The per-meal save in `pushMeals` also persists owner-claim writes (`ownerUserId = ownerUserId`) so a mid-loop failure doesn't lose them for meals that already pushed cleanly. Same treatment for `pushSavedFoods`.
+- `Services/SyncService.swift` — `pull` now uses `response.serverTime` as the next `lastPulled` cutoff. The route already returns it; before, the client wrote its own `Date()` which silently lost any record updated on the server during the request window under any clock skew. Added the new `serverTime: Date?` field to `SyncStateResponse`.
+- `Services/SyncService.swift` — `applyMerge` now explicitly `context.insert(item)`s each `FoodItem` produced by `FoodItemDTO.toModel()` on both the create and update paths, then wires the relationship. SwiftData's auto-insert via inverse relationship is unreliable when the parent's relationship is reassigned wholesale, so this is the safe pattern.
+
+### Known limitations not addressed in this pass
+- `routes/sync_state.php` still caps meals at 500 and saved foods at 1000 with no pagination; a user signing in on a new device with more than that gets a silent truncation. Worth revisiting if any active account approaches that ceiling.
+- `pushSettings` still sends the settings envelope on every flush regardless of dirtiness. Harmless but noisy.
+
+### Follow-ups for the user
+- None on the server side — these changes are all iOS.
+- Smoke test on a second device: sign in, verify History rows show the meal photo within a second of appearing, verify dashboard/today views show the same image. Then sign out, sign in as a different test account, verify the previous account's meals are gone.
+- Build via `open CalorieCounter.xcworkspace` (the new file is registered in the pbxproj). No `pod install` required — no Podfile changes.
+
+---
+
 ## 2026-05-23 — Fix `SQLSTATE[HY093]: Invalid parameter number` on sync
 
 **Why:** After the `uploads_dir` fix landed, the Settings screen surfaced `Sync failed: Server error (500): SQLSTATE[HY093]: Invalid parameter number`. Five upserts in the codebase (`routes/meals.php`, `routes/saved_foods.php`, `routes/settings.php`, plus the meals / saved_foods / user_settings upserts in `routes/migrate_bulk.php`) use `INSERT … ON DUPLICATE KEY UPDATE` and reuse the same named placeholders (`:d`, `:mt`, `:p`, etc.) on both sides of the statement. With `PDO::ATTR_EMULATE_PREPARES => false`, some shared-host PHP/PDO_MySQL builds (notably PHP < 8.1) reject placeholder reuse with HY093. PHP 8.1+ generally allows it, but the user's Hostinger PHP build is throwing the error, so we can't rely on the runtime supporting reuse.

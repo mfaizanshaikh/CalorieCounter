@@ -50,16 +50,7 @@ struct MealDetailView: View {
     }
 
     private var imageSection: some View {
-        Group {
-            if let imageData = entry.imageData,
-               let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 250)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            }
-        }
+        MealPhotoView(entry: entry, hero: true)
     }
 
     private var caloriesSummary: some View {

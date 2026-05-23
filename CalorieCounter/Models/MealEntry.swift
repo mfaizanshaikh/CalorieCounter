@@ -75,6 +75,31 @@ final class MealEntry {
 }
 
 extension MealEntry {
+    /// Predicate that scopes a fetch to the currently signed-in user's meals
+    /// and hides soft-deleted rows. Pre-migration rows (`ownerUserId == nil`)
+    /// are included so users upgrading from v1.2 can still see their meals
+    /// during the brief window before first-sign-in migration claims them.
+    /// Returns a never-match predicate when no user is provided.
+    static func currentUserScope(_ userId: UUID?) -> Predicate<MealEntry> {
+        guard let userId else {
+            return #Predicate<MealEntry> { _ in false }
+        }
+        return #Predicate<MealEntry> { meal in
+            meal.deletedAt == nil &&
+            (meal.ownerUserId == userId || meal.ownerUserId == nil)
+        }
+    }
+
+    /// Reads the signed-in user's UUID from the keychain. Nonisolated, so it
+    /// can be called from SwiftUI view initializers without crossing into
+    /// `AuthService`'s MainActor.
+    static var currentUserIdFromKeychain: UUID? {
+        guard let str = KeychainHelper.load(for: BackendConfig.KeychainKey.userId) else {
+            return nil
+        }
+        return UUID(uuidString: str)
+    }
+
     var calorieRange: String {
         "\(totalCaloriesMin)-\(totalCaloriesMax)"
     }

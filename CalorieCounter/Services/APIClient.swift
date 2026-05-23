@@ -80,6 +80,11 @@ actor APIClient {
         return try decode(data)
     }
 
+    /// GET that returns raw bytes (binary blobs like photos).
+    func getData(_ path: String, query: [String: String] = [:]) async throws -> Data {
+        try await rawRequest(path: path, method: "GET", query: query, contentType: nil, body: nil)
+    }
+
     @discardableResult
     func post<Body: Encodable, T: Decodable>(_ path: String, body: Body) async throws -> T {
         let data = try await request(path: path, method: "POST", body: body)

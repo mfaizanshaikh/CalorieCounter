@@ -12,10 +12,11 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 AccountSection()
-                apiKeySection
                 calorieGoalSection
                 displaySection
                 dataSection
+                apiKeySection
+                AccountActionsSection()
                 aboutSection
             }
             .navigationTitle("Settings")

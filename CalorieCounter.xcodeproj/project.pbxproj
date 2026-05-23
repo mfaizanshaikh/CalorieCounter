@@ -53,6 +53,7 @@
 		001122330000000000001010 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000001110 /* SignInView.swift */; };
 		001122330000000000001011 /* AccountSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000001111 /* AccountSection.swift */; };
 		001122330000000000001012 /* DataSyncDisclosureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000001112 /* DataSyncDisclosureView.swift */; };
+		001122330000000000001013 /* PhotoLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001122330000000000001113 /* PhotoLoader.swift */; };
 		34CD80283030C30817B1D175 /* Pods_CalorieCounter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAD0448D7173F2449E213872 /* Pods_CalorieCounter.framework */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* AnalysisLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* AnalysisLoadingView.swift */; };
 		B3BFA41C2F6423AA003F1EC3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B3BFA41B2F6423AA003F1EC3 /* GoogleService-Info.plist */; };
@@ -106,6 +107,7 @@
 		001122330000000000001110 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		001122330000000000001111 /* AccountSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSection.swift; sourceTree = "<group>"; };
 		001122330000000000001112 /* DataSyncDisclosureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSyncDisclosureView.swift; sourceTree = "<group>"; };
+		001122330000000000001113 /* PhotoLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLoader.swift; sourceTree = "<group>"; };
 		001122330000000000001200 /* CalorieCounter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CalorieCounter.entitlements; sourceTree = "<group>"; };
 		075AE92CB0B9AF853104208B /* Pods-CalorieCounter.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CalorieCounter.release.xcconfig"; path = "Target Support Files/Pods-CalorieCounter/Pods-CalorieCounter.release.xcconfig"; sourceTree = "<group>"; };
 		722810A837909A37183A271D /* Pods-CalorieCounter.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CalorieCounter.debug.xcconfig"; path = "Target Support Files/Pods-CalorieCounter/Pods-CalorieCounter.debug.xcconfig"; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				001122330000000000001106 /* SyncCoordinator.swift */,
 				001122330000000000001107 /* SyncStore.swift */,
 				001122330000000000001108 /* BackendConfig.swift */,
+				001122330000000000001113 /* PhotoLoader.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -481,6 +484,7 @@
 				001122330000000000001010 /* SignInView.swift in Sources */,
 				001122330000000000001011 /* AccountSection.swift in Sources */,
 				001122330000000000001012 /* DataSyncDisclosureView.swift in Sources */,
+				001122330000000000001013 /* PhotoLoader.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

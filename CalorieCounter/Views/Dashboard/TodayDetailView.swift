@@ -2,10 +2,18 @@ import SwiftUI
 import SwiftData
 
 struct TodayDetailView: View {
-    @Query(sort: \MealEntry.date, order: .reverse) private var allEntries: [MealEntry]
+    @Query private var allEntries: [MealEntry]
     @StateObject private var viewModel = DashboardViewModel()
     @Environment(\.modelContext) private var modelContext
     @ScaledMetric private var caloriesFontSize: CGFloat = 64
+
+    init() {
+        _allEntries = Query(
+            filter: MealEntry.currentUserScope(MealEntry.currentUserIdFromKeychain),
+            sort: \.date,
+            order: .reverse
+        )
+    }
 
     private var todayEntries: [MealEntry] {
         allEntries.filter { $0.date.isToday }
@@ -145,21 +153,14 @@ struct TodayMealRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let imageData = entry.imageData,
-               let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            } else {
-                Image(systemName: entry.mealType.icon)
-                    .font(.title2)
-                    .foregroundStyle(.green)
-                    .frame(width: 60, height: 60)
-                    .background(Color.green.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
+            MealPhotoView(
+                entry: entry,
+                size: 60,
+                cornerRadius: 10,
+                placeholderIcon: entry.mealType.icon,
+                placeholderBackground: Color.green.opacity(0.1),
+                placeholderForeground: .green
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.mealType.rawValue)

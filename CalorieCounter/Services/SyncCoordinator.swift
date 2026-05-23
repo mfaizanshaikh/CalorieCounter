@@ -72,13 +72,55 @@ final class SyncCoordinator: ObservableObject {
         }
     }
 
-    /// Called when the user signs out — clears local sync bookkeeping so the
-    /// next sign-in does a fresh pull.
+    /// Called when the user signs out — clears local sync bookkeeping and
+    /// wipes the SwiftData store so the next account on this device starts
+    /// from a clean slate.
     func resetForSignOut() {
         UserDefaults.standard.removeObject(forKey: "sync.lastPushedAt.v1")
         UserDefaults.standard.removeObject(forKey: "sync.lastPulledAt.v1")
+        // The "first sign-in migration" claim-and-bulk-upload step must run
+        // again for whoever signs in next, so they don't inherit the previous
+        // user's gating flag.
+        UserDefaults.standard.removeObject(forKey: "sync.migration_v1_done")
+        // Cancel both the pending debounce and any sync already in flight.
+        // The same Task covers both phases (debounce sleep → runSync), so
+        // cancellation propagates through URLSession and aborts in-flight
+        // requests under the about-to-be-revoked token.
+        debounceTask?.cancel()
+        debounceTask = nil
+        // Drop cached photo bytes for the signed-out user so they don't
+        // linger in memory and bleed into the next account on this device.
+        PhotoLoader.shared.clear()
+        wipeLocalData()
         self.lastSyncedAt = nil
         self.state = .idle
+    }
+
+    /// Deletes all user-scoped SwiftData rows. Bundled foods (no owner,
+    /// not from AI, no search count) are kept — they re-seed on launch
+    /// from `Resources/FoodDatabase.json` and are local-only by design.
+    private func wipeLocalData() {
+        guard let container else { return }
+        let context = ModelContext(container)
+        do {
+            let meals = try context.fetch(FetchDescriptor<MealEntry>())
+            for meal in meals { context.delete(meal) }
+
+            let savedFoods = try context.fetch(FetchDescriptor<SavedFood>())
+            for food in savedFoods where food.ownerUserId != nil || food.isFromAI || food.searchCount > 0 {
+                context.delete(food)
+            }
+
+            // Any queued mutations belong to the user who's signing out.
+            let ops = try context.fetch(FetchDescriptor<SyncOp>())
+            for op in ops { context.delete(op) }
+
+            try context.save()
+        } catch {
+            #if DEBUG
+            print("[Sync] wipeLocalData failed: \(error)")
+            #endif
+        }
     }
 
     // MARK: - Internal
@@ -96,6 +138,11 @@ final class SyncCoordinator: ObservableObject {
             self.lastSyncedAt = Date()
             self.state = .idle
         } catch {
+            // A sign-out cancels this task; treat the resulting URLError.cancelled
+            // (or any cancellation) as intentional teardown rather than a sync failure.
+            if Task.isCancelled || (error as? URLError)?.code == .cancelled {
+                return
+            }
             #if DEBUG
             print("[Sync] failed: \(error)")
             #endif

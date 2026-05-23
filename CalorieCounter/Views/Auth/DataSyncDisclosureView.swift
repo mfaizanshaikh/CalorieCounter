@@ -21,15 +21,14 @@ struct DataSyncDisclosureView: View {
 
                     Group {
                         sectionHeader("What gets uploaded to our server")
-                        bullet("Your name and email from Apple or Google — only used to identify your account.")
-                        bullet("Your meal logs: food items, calories, macros, and the photo you took (if any).")
-                        bullet("Saved foods you've added.")
-                        bullet("Your daily calorie goal.")
+                        bullet("Your account info from Apple or Google, such as name and email.")
+                        bullet("Your meals, saved foods, food photos, and nutrition estimates.")
+                        bullet("Your app settings, including your daily calorie goal.")
                     }
 
                     Group {
                         sectionHeader("Why")
-                        Text("So that if you reinstall the app, switch phones, or accidentally delete a meal, your history comes back when you sign in. Nothing else.")
+                        Text("We save meals, saved foods, photos, settings, and account info so your data can sync across devices and be restored when you sign back in.")
                             .font(.callout)
                     }
 
@@ -43,6 +42,7 @@ struct DataSyncDisclosureView: View {
                         sectionHeader("Third parties")
                         bullet("Apple / Google — only to verify it's you when signing in.")
                         bullet("OpenAI — receives food photos you submit, to analyze nutrition. They don't store them beyond the request.")
+                        bullet("Firebase / Google services may process analytics or technical data if Firebase Analytics remains enabled.")
                     }
 
                     Link(

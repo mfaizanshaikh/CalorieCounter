@@ -1,17 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// Settings → Account block. Includes sign-out and the App Store-mandated
-/// in-app account deletion (Guideline 5.1.1(v)).
+/// Settings → Account block. Shows profile and sync status.
 struct AccountSection: View {
     @EnvironmentObject private var auth: AuthService
     @EnvironmentObject private var sync: SyncCoordinator
-    @Environment(\.modelContext) private var modelContext
-
-    @State private var showSignOutConfirm = false
-    @State private var showDeleteConfirm = false
-    @State private var isDeleting = false
-    @State private var deleteError: String?
 
     var body: some View {
         Section {
@@ -46,19 +39,77 @@ struct AccountSection: View {
         } header: {
             Text("Account")
         }
+    }
 
+    private func initials(_ user: RemoteUser) -> String {
+        let parts = (user.name ?? user.email).split(separator: " ").prefix(2)
+        return parts.compactMap { $0.first.map(String.init) }.joined().uppercased()
+    }
+
+    private var syncIconName: String {
+        switch sync.state {
+        case .idle: return "checkmark.icloud"
+        case .syncing: return "icloud.and.arrow.up"
+        case .failed: return "exclamationmark.icloud"
+        }
+    }
+
+    private var syncIconColor: Color {
+        switch sync.state {
+        case .idle: return .green
+        case .syncing: return .blue
+        case .failed: return .orange
+        }
+    }
+
+    private var syncLabel: String {
+        switch sync.state {
+        case .idle:
+            if let date = sync.lastSyncedAt {
+                let formatter = RelativeDateTimeFormatter()
+                formatter.unitsStyle = .short
+                return "Synced \(formatter.localizedString(for: date, relativeTo: Date()))"
+            } else {
+                return "All changes saved"
+            }
+        case .syncing: return "Syncing…"
+        case .failed(let message): return "Sync failed: \(message)"
+        }
+    }
+}
+
+/// Settings → bottom account actions. Keeps destructive account deletion
+/// visually separated from sign-out to reduce accidental taps.
+struct AccountActionsSection: View {
+    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var sync: SyncCoordinator
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showSignOutConfirm = false
+    @State private var showDeleteConfirm = false
+    @State private var isDeleting = false
+    @State private var deleteError: String?
+
+    var body: some View {
         Section {
             Button(role: .none) {
                 showSignOutConfirm = true
             } label: {
                 Label("Sign out", systemImage: "arrow.backward.circle")
             }
+        }
 
+        Section {
             Button(role: .destructive) {
                 showDeleteConfirm = true
             } label: {
-                Label("Delete account", systemImage: "trash")
+                if isDeleting {
+                    Label("Deleting account…", systemImage: "trash")
+                } else {
+                    Label("Delete account", systemImage: "trash")
+                }
             }
+            .disabled(isDeleting)
         } footer: {
             Text("Deleting your account permanently removes all your meals, saved foods, and settings from our servers.")
         }
@@ -115,42 +166,6 @@ struct AccountSection: View {
             #if DEBUG
             print("[AccountSection] local wipe failed: \(error)")
             #endif
-        }
-    }
-
-    private func initials(_ user: RemoteUser) -> String {
-        let parts = (user.name ?? user.email).split(separator: " ").prefix(2)
-        return parts.compactMap { $0.first.map(String.init) }.joined().uppercased()
-    }
-
-    private var syncIconName: String {
-        switch sync.state {
-        case .idle: return "checkmark.icloud"
-        case .syncing: return "icloud.and.arrow.up"
-        case .failed: return "exclamationmark.icloud"
-        }
-    }
-
-    private var syncIconColor: Color {
-        switch sync.state {
-        case .idle: return .green
-        case .syncing: return .blue
-        case .failed: return .orange
-        }
-    }
-
-    private var syncLabel: String {
-        switch sync.state {
-        case .idle:
-            if let date = sync.lastSyncedAt {
-                let formatter = RelativeDateTimeFormatter()
-                formatter.unitsStyle = .short
-                return "Synced \(formatter.localizedString(for: date, relativeTo: Date()))"
-            } else {
-                return "All changes saved"
-            }
-        case .syncing: return "Syncing…"
-        case .failed(let message): return "Sync failed: \(message)"
         }
     }
 }
