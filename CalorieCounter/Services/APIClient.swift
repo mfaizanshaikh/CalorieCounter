@@ -101,6 +101,11 @@ actor APIClient {
         _ = try await request(path: path, method: "DELETE", body: nil as EmptyBody?)
     }
 
+    func deleteReturning<T: Decodable>(_ path: String) async throws -> T {
+        let data = try await request(path: path, method: "DELETE", body: nil as EmptyBody?)
+        return try decode(data)
+    }
+
     /// Multipart upload. `parts` is ordered (boundary preserved). `jsonPart`,
     /// if set, is encoded as `Content-Disposition: form-data; name="meta"`.
     @discardableResult

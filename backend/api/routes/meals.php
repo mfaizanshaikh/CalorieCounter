@@ -118,6 +118,8 @@ function delete_meal(PDO $pdo, array $user, string $id): void {
         $row = $stmt->fetch();
         if (!$row) { $pdo->rollBack(); json_ok(['status' => 'already_gone']); }
         if ($row['user_id'] !== $user['id']) { $pdo->rollBack(); json_error(403, 'Forbidden.'); }
+        $pdo->prepare('DELETE FROM public_wall_posts WHERE meal_id = :id AND user_id = :u')
+            ->execute([':id' => $id, ':u' => $user['id']]);
         if ($row['photo_id']) {
             global $CONFIG;
             photo_delete($CONFIG, $user['id'], $row['photo_id']);

@@ -30,6 +30,8 @@ if ($method === 'GET' && $id) {
 }
 
 if ($method === 'DELETE' && $id) {
+    $pdo->prepare('DELETE FROM public_wall_posts WHERE photo_id = :p AND user_id = :u')
+        ->execute([':p' => $id, ':u' => $user['id']]);
     photo_delete($CONFIG, $user['id'], $id);
     $pdo->prepare('UPDATE meals SET photo_id = NULL, updated_at = :n WHERE photo_id = :p AND user_id = :u')
         ->execute([':n' => db_now(), ':p' => $id, ':u' => $user['id']]);

@@ -12,7 +12,8 @@ try {
     $pdo->prepare('UPDATE refresh_tokens SET revoked_at = :n WHERE user_id = :u')
         ->execute([':n' => db_now(), ':u' => $user['id']]);
     // The schema cascades on user delete, so this single DELETE removes:
-    //   user_settings, meals, food_items, saved_foods, refresh_tokens.
+    //   user_settings, meals, food_items, saved_foods, refresh_tokens,
+    //   public wall posts, wall likes/saves/reports, and wall blocks.
     $pdo->prepare('DELETE FROM users WHERE id = :id')->execute([':id' => $user['id']]);
     $pdo->commit();
 } catch (Throwable $e) {

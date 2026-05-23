@@ -99,6 +99,24 @@ function route(string $method, string $path, array $CONFIG): void {
         if ($method === 'DELETE') { require __DIR__ . '/routes/photos.php'; return; }
     }
 
+    if ($path === '/wall/posts') {
+        if ($method === 'GET' || $method === 'POST') { require __DIR__ . '/routes/wall.php'; return; }
+    }
+    if (preg_match('#^/wall/posts/([0-9a-f-]{36})$#', $path, $m)) {
+        $GLOBALS['route_param_id'] = $m[1];
+        if ($method === 'DELETE') { require __DIR__ . '/routes/wall.php'; return; }
+    }
+    if (preg_match('#^/wall/posts/([0-9a-f-]{36})/(like|save|report|photo)$#', $path, $m)) {
+        $GLOBALS['route_param_id'] = $m[1];
+        $GLOBALS['route_action'] = $m[2];
+        if (in_array($method, ['GET', 'POST', 'DELETE'], true)) { require __DIR__ . '/routes/wall.php'; return; }
+    }
+    if (preg_match('#^/wall/users/([0-9a-f-]{36})/block$#', $path, $m)) {
+        $GLOBALS['route_param_id'] = $m[1];
+        $GLOBALS['route_action'] = 'block';
+        if ($method === 'POST') { require __DIR__ . '/routes/wall.php'; return; }
+    }
+
     if ($method === 'POST' && $path === '/migrate/bulk')  { require __DIR__ . '/routes/migrate_bulk.php'; return; }
 
     json_error(404, 'Not found: ' . $method . ' ' . $path);

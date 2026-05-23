@@ -47,13 +47,33 @@ This may include:
 - Associated meal photo reference
 - Created, updated, and deleted status information used for syncing
 
-### d) Saved Foods
+### d) Public Food Wall Posts
+
+If you choose to tap "Post to Wall" after saving an analyzed meal, that meal is shared on the public food wall.
+
+Posting is optional and off by default. We do not automatically post meals.
+
+Public wall posts may show:
+
+- The meal photo
+- Your first name only, or "Someone" if no name is available
+- Meal type
+- Food item names
+- Calories and meal-level macronutrients
+- Posted time
+- Like and save counts
+
+Public wall posts do not show your email address, full name, profile photo, daily totals, location, comments, or private AI assumptions.
+
+The app also stores wall likes, saved inspiration posts, reports, and blocked-user relationships needed to operate the wall, moderation, and safety features.
+
+### e) Saved Foods
 
 User-created saved foods, including foods added manually or generated from AI results, may be stored locally and synced to our server.
 
 Bundled/default food database items included with the app are local app content and are not uploaded as your personal data.
 
-### e) App Settings
+### f) App Settings
 
 We may sync app settings needed to keep your experience consistent across devices, such as:
 
@@ -61,7 +81,7 @@ We may sync app settings needed to keep your experience consistent across device
 - Calorie range display preference
 - Onboarding completion state
 
-### f) Authentication and Security Data
+### g) Authentication and Security Data
 
 To keep your account signed in and protect the service, we store:
 
@@ -70,7 +90,7 @@ To keep your account signed in and protect the service, we store:
 - Login rate-limit records, which may include IP address and attempt count
 - Basic server request information needed for security, debugging, abuse prevention, and service operation
 
-### g) AI Requests, Proxy Identifiers, and OpenAI API Key
+### h) AI Requests, Proxy Identifiers, and OpenAI API Key
 
 If you add your own OpenAI API key, it is stored only in the iOS Keychain on your device.
 
@@ -78,7 +98,7 @@ Your OpenAI API key is not uploaded to our server. It is sent directly to OpenAI
 
 If you do not add your own OpenAI API key, the app may use our built-in proxy service for AI analysis and AI-powered food search. In that case, your food image, food search text, and analysis request may pass through our proxy before being sent to OpenAI. The proxy may receive technical identifiers such as bundle ID, device identifier, IP address, and request metadata for rate limiting, abuse prevention, debugging, and service operation.
 
-### h) Analytics and App Usage Data
+### i) Analytics and App Usage Data
 
 The app includes Firebase Analytics. Firebase Analytics may automatically collect technical and usage information such as:
 
@@ -99,6 +119,8 @@ We use your information to:
 - Restore your data after reinstalling the app or signing in on another device
 - Estimate nutrition from food photos using AI
 - Provide app functionality such as history, dashboard, saved foods, and settings
+- Provide the public food wall when you explicitly post a meal
+- Support wall safety features such as reporting, moderation, and blocking users
 - Understand app usage, reliability, and feature performance using analytics
 - Prevent abuse, enforce rate limits, debug issues, and maintain service security
 - Delete your account and associated data when requested
@@ -137,6 +159,10 @@ The app includes Firebase/Google configuration used for app services such as Goo
 Google privacy policy:
 https://policies.google.com/privacy
 
+### Other AI Calorie Coach Users
+
+If you post a meal to the public food wall, other signed-in users can view the public wall post information listed in Section 1(d). They cannot see your email address, full name, profile photo, daily totals, comments, location, or private AI assumptions through the wall.
+
 ---
 
 ## 4. Information We Do Not Collect for Advertising
@@ -156,9 +182,11 @@ Your data is stored in two places:
 - Locally on your device
 - On our server, when you are signed in
 
-Server-stored data may include your account profile, meal records, food items, saved foods, settings, and meal photos.
+Server-stored data may include your account profile, meal records, food items, saved foods, settings, meal photos, public wall posts, likes, saves, reports, and block relationships.
 
 Meal photos are stored in a private server upload directory outside the public web root and are served only through authenticated app requests.
+
+Public wall photos are also served through authenticated app requests rather than public static image URLs.
 
 Deleted meals and saved foods may be temporarily retained as sync deletion records so changes can propagate across devices. They are removed or hidden according to the app's sync and cleanup behavior.
 
@@ -175,9 +203,12 @@ You can delete data in the app:
 - To delete meal data from the app, use the app's data deletion controls.
 - To remove your OpenAI API key, go to Settings and remove the key.
 - To sign out, use the account section in Settings.
+- To remove one of your public wall posts, use Delete My Post from that post's wall actions menu.
 - To permanently delete your account, use Delete Account in Settings.
 
-Deleting your account removes your account data from our server, including meal history, saved foods, settings, refresh tokens, and uploaded meal photos associated with your account.
+Deleting a meal removes public wall posts based on that meal.
+
+Deleting your account removes your account data from our server, including meal history, saved foods, settings, refresh tokens, uploaded meal photos, public wall posts, wall likes, wall saves, wall reports, and wall blocks associated with your account.
 
 Deleting your account does not automatically delete data already processed by third-party providers such as OpenAI, Apple, Google, or Firebase. Those providers handle data according to their own policies.
 

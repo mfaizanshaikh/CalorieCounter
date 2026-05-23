@@ -9,7 +9,10 @@ struct AnalysisView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.requestReview) private var requestReview
-    @State private var showingSaveSuccess = false
+    @State private var savedMeal: MealEntry?
+    @State private var isPostingToWall = false
+    @State private var wallPostMessage: String?
+    @State private var wallPostError: String?
     @FocusState private var isCalorieFieldFocused: Bool
     @ScaledMetric private var caloriesFontSize: CGFloat = 48
 
@@ -41,13 +44,6 @@ struct AnalysisView: View {
             }
         }
         .scrollDismissesKeyboard(.interactively)
-        .alert("Meal Saved!", isPresented: $showingSaveSuccess) {
-            Button("OK") {
-                onDismiss()
-            }
-        } message: {
-            Text("Your meal has been logged successfully.")
-        }
     }
 
     private var imageSection: some View {
@@ -141,7 +137,7 @@ struct AnalysisView: View {
                 assumptionsSection(result.assumptions)
             }
 
-            saveButton
+            saveAndPostSection
         }
     }
 
@@ -276,13 +272,70 @@ struct AnalysisView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
+    private var saveAndPostSection: some View {
+        VStack(spacing: 12) {
+            if let savedMeal {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("Meal saved")
+                        .font(.headline)
+                    Spacer()
+                }
+
+                Button {
+                    postToWall(savedMeal)
+                } label: {
+                    Label(isPostingToWall ? "Posting..." : "Post to Wall", systemImage: "person.2.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                }
+                .buttonStyle(.bordered)
+                .tint(.green)
+                .disabled(isPostingToWall || wallPostMessage != nil)
+
+                Text("Posts show this meal's photo, your first name, food names, calories, and macros.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                if let wallPostMessage {
+                    Text(wallPostMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.green)
+                }
+
+                if let wallPostError {
+                    Text(wallPostError)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button {
+                    onDismiss()
+                } label: {
+                    Text("Done")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+            } else {
+                saveButton
+            }
+        }
+    }
+
     private var saveButton: some View {
         Button {
-            if viewModel.saveMealEntry(image: image, to: modelContext) != nil {
+            if let entry = viewModel.saveMealEntry(image: image, to: modelContext) {
                 if AppReviewManager.recordFoodLogAndCheckReview() {
                     requestReview()
                 }
-                showingSaveSuccess = true
+                savedMeal = entry
+                wallPostMessage = nil
+                wallPostError = nil
             }
         } label: {
             Label("Save Meal", systemImage: "checkmark.circle.fill")
@@ -291,6 +344,22 @@ struct AnalysisView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(.green)
+    }
+
+    private func postToWall(_ meal: MealEntry) {
+        guard !isPostingToWall else { return }
+        isPostingToWall = true
+        wallPostError = nil
+
+        Task {
+            do {
+                _ = try await WallService.shared.publish(meal: meal, in: modelContext)
+                wallPostMessage = "Posted to Wall."
+            } catch {
+                wallPostError = error.localizedDescription
+            }
+            isPostingToWall = false
+        }
     }
 
     private func errorSection(_ error: String) -> some View {

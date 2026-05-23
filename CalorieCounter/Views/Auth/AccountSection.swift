@@ -111,7 +111,7 @@ struct AccountActionsSection: View {
             }
             .disabled(isDeleting)
         } footer: {
-            Text("Deleting your account permanently removes all your meals, saved foods, and settings from our servers.")
+            Text("Deleting your account permanently removes your meals, saved foods, public wall posts, likes, saves, reports, blocks, and settings from our servers.")
         }
         .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
             Button("Sign out", role: .destructive) {
@@ -130,7 +130,7 @@ struct AccountActionsSection: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently removes your account, meal history, photos, and saved foods from our servers and this device. This cannot be undone.")
+            Text("This permanently removes your account, meal history, photos, saved foods, wall posts, likes, saves, reports, and blocks from our servers and this device. This cannot be undone.")
         }
         .alert("Couldn't delete account", isPresented: .constant(deleteError != nil)) {
             Button("OK") { deleteError = nil }

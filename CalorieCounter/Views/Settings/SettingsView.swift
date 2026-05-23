@@ -26,7 +26,7 @@ struct SettingsView: View {
                     clearAllData()
                 }
             } message: {
-                Text("This will permanently delete all your meal entries. This action cannot be undone.")
+                Text("This will permanently delete all your meal entries and remove any public wall posts based on those meals. This action cannot be undone.")
             }
             .alert("Remove API Key", isPresented: $showingRemoveKeyAlert) {
                 Button("Cancel", role: .cancel) {}
@@ -209,10 +209,21 @@ struct SettingsView: View {
                 }
             }
             .accessibilityLabel("Privacy Policy — opens in browser")
+            Link(destination: URL(string: "mailto:mfaizan.shaikh@gmail.com")!) {
+                HStack {
+                    Text("Contact Support")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "envelope")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel("Contact support by email")
         } header: {
             Text("About")
         } footer: {
-            Text("This app sends food photos to OpenAI to estimate nutritional content. Photos are not stored by OpenAI beyond the duration of the request.")
+            Text("This app sends food photos to OpenAI to estimate nutritional content. Wall posts are public only when you tap Post to Wall.")
         }
     }
 

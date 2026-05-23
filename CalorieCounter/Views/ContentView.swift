@@ -11,23 +11,29 @@ struct ContentView: View {
                 }
                 .tag(0)
 
+            WallView()
+                .tabItem {
+                    Label("Wall", systemImage: "person.2.fill")
+                }
+                .tag(1)
+
             HistoryView()
                 .tabItem {
                     Label("History", systemImage: "clock.fill")
                 }
-                .tag(1)
+                .tag(2)
 
             DashboardView()
                 .tabItem {
                     Label("Dashboard", systemImage: "chart.bar.fill")
                 }
-                .tag(2)
+                .tag(3)
 
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
-                .tag(3)
+                .tag(4)
         }
         .tint(.green)
     }
