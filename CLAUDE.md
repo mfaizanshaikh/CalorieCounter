@@ -4,7 +4,7 @@ Orientation file for Claude Code. Goal: spend tokens on the work, not on re-expl
 
 ## Project at a glance
 
-AI Calorie Coach — live iOS app (App Store id 6741466804). SwiftUI + SwiftData, iOS 17+, CocoaPods. Bundle id `com.mfaizanshaikh.caloriecounter`, team `KJS5669LU6`.
+AI Calorie Coach — live iOS app (App Store id 6741466804). SwiftUI + SwiftData, iOS 17+, CocoaPods. Bundle id `com.mfaizanshaikh.caloriecounter`.
 
 As of 2026-05-22 the app is gaining Google + Apple sign-in and cloud sync via a vanilla PHP + MySQL backend on shared cPanel hosting. See `backend/README.md` for setup and `changes.md` for what shipped when.
 
@@ -18,9 +18,9 @@ CalorieCounter/                 iOS app source (one Xcode target)
 ├── Services/                   Actors: OpenAI, FoodSearch, APIClient, AuthService, SyncService, SyncCoordinator
 ├── Utilities/                  KeychainHelper, ImageProcessor, DateExtensions, AppReviewManager
 ├── Resources/                  FoodDatabase.json (~9.6k foods), PrivacyInfo.xcprivacy
-├── Info.plist                  contains placeholders BackendBaseURL + REPLACE_WITH_REVERSED_CLIENT_ID
+├── Info.plist                  contains placeholder backend and OAuth URL-scheme config
 ├── CalorieCounter.entitlements Sign in with Apple
-└── GoogleService-Info.plist    Firebase config (needs CLIENT_ID for Sign-In — see backend/README.md §1)
+└── GoogleService-Info.plist    Firebase config template; do not commit private/generated credentials
 
 backend/                        PHP + MySQL backend (uploaded to cPanel via FTP)
 ├── schema.sql                  7 tables, run once via phpMyAdmin
@@ -36,7 +36,7 @@ changes.md                      Running log of project changes. Keep updated.
 README.md                       Public-facing app description (App Store / GitHub readers).
 ```
 
-For the active sync feature design, read `/Users/faizan/.claude/plans/i-have-a-ai-cuddly-wave.md`.
+For active feature design notes, use local planning files only. Do not add machine-local Claude paths or private planning notes to this public repo.
 
 ## Standing conventions
 
@@ -45,7 +45,7 @@ For the active sync feature design, read `/Users/faizan/.claude/plans/i-have-a-a
 3. **Update `changes.md` as part of the change.** Newest entry on top under the first `---`. Heading `## YYYY-MM-DD — Summary`. Body covers *why*, grouped by area, plus any manual follow-ups for the user. Don't promise to do this later.
 4. **All SwiftData mutations go through `Services/SyncStore.swift`.** `SyncStore.save(meal:)`, `delete(meal:)`, `save(savedFood:)`, etc. handle `updatedAt` bumping, `ownerUserId` tagging, and triggering a debounced sync. Don't call `context.insert / delete / save` directly from new view models.
 5. **Open the `.xcworkspace`, not the `.xcodeproj`.** The project uses CocoaPods. `pod install` after any `Podfile` change.
-6. **Backend secrets stay out of git.** `backend/api/config.php`, `vendor/`, and `private_uploads/` are gitignored at both the root `.gitignore` and `backend/.gitignore`.
+6. **Secrets stay out of git.** Before every commit or push, check staged and untracked files for API keys, tokens, credentials, private config, production service files, local paths, and generated OAuth/Firebase files.
 7. **OpenAI API key is per-device** (Keychain via `KeychainHelper`). Don't sync it; the user can use a different key per device, and we want data minimization.
 
 ## Build & run
@@ -64,7 +64,7 @@ plutil -lint CalorieCounter/Info.plist CalorieCounter/CalorieCounter.entitlement
 
 Sign in with Apple **does not work in the iOS simulator** with a generic iCloud account — test on a real device.
 
-PHP is not installed locally; the backend can only be smoke-tested after upload (`curl https://yourdomain.com/api/health`).
+PHP is not installed locally; the backend can only be smoke-tested after upload against the configured API health endpoint.
 
 ## Architecture notes
 
@@ -72,11 +72,11 @@ PHP is not installed locally; the backend can only be smoke-tested after upload 
 - **Soft-delete tombstones**: rows carry `deletedAt`. For local→server deletes, a `SyncOp` queue entry is created before physical delete so we don't lose the id mid-flight.
 - **Photos** live as files outside the webroot at `{uploads_dir}/{user_uuid}/{photo_uuid}.jpg`. Streamed through PHP after auth. Server cascade unlinks them when a meal or account is deleted.
 - **Auth** is short-lived access JWT (HS256, 15 min) + opaque refresh token (random 256-bit, stored hashed). `APIClient` handles 401 → single refresh attempt → retry.
-- **GoogleService-Info.plist** as committed today only has Firebase Analytics keys. Adding the iOS OAuth client in Google Cloud Console produces a new plist with `CLIENT_ID` and `REVERSED_CLIENT_ID` — both are needed for Sign-In. See `backend/README.md` §1.
+- **GoogleService-Info.plist** must not contain private/generated production credentials in the public repo. Keep release-specific OAuth/Firebase values out of git and document placeholder setup in `backend/README.md`.
 
 ## Common gotchas
 
-- `Info.plist` ships with two placeholders: `REPLACE_WITH_REVERSED_CLIENT_ID` (Google URL scheme) and `BackendBaseURL = https://example.com/api`. Both must be set to real values before a release build will work.
+- `Info.plist` ships with placeholder backend and OAuth URL-scheme values. They must be set outside the public repo before a release build will work.
 - SourceKit shows spurious "Cannot find type X in scope" errors in fresh checkouts before `pod install` runs and the project is built once. The real compiler is authoritative.
 - The pbxproj uses traditional file refs, **not** synchronized folder references. New Swift files must be registered in `PBXBuildFile`, `PBXFileReference`, the parent `PBXGroup`, and `PBXSourcesBuildPhase` — Xcode does this when you drag files in; manual edits need all four.
 - `MealType` enum has both `snack` and `lateSnack` cases — `lateSnack` is kept for backward compatibility with existing user data and should not be removed.
@@ -86,5 +86,4 @@ PHP is not installed locally; the backend can only be smoke-tested after upload 
 
 - `backend/README.md` — full backend setup (Google Cloud, Apple Dev portal, cPanel, FTP, App Store Connect updates).
 - `changes.md` — what changed and when.
-- `/Users/faizan/.claude/plans/i-have-a-ai-cuddly-wave.md` — sync feature design doc.
-- `~/.claude/projects/-Users-faizan-Documents-Personal-Projects-CalorieCounter/memory/MEMORY.md` — auto-loaded per-machine notes (already in context).
+- Local planning and memory files may exist outside the repo. Do not commit machine-local Claude paths or private notes.
