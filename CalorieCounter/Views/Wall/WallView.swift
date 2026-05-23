@@ -161,13 +161,13 @@ private struct WallPostCard: View {
                 Spacer()
 
                 Menu {
-                    Button {
-                        onReport()
-                    } label: {
-                        Label("Report Post", systemImage: "flag")
-                    }
-
                     if !post.isMine {
+                        Button {
+                            onReport()
+                        } label: {
+                            Label("Report Post", systemImage: "flag")
+                        }
+
                         Button(role: .destructive) {
                             onBlock()
                         } label: {

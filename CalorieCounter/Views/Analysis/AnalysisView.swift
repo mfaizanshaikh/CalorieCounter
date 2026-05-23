@@ -13,6 +13,7 @@ struct AnalysisView: View {
     @State private var isPostingToWall = false
     @State private var wallPostMessage: String?
     @State private var wallPostError: String?
+    @State private var didRunDismissCleanup = false
     @FocusState private var isCalorieFieldFocused: Bool
     @ScaledMetric private var caloriesFontSize: CGFloat = 48
 
@@ -38,12 +39,15 @@ struct AnalysisView: View {
             if !viewModel.isAnalyzing {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        onDismiss()
+                        dismissAnalysis()
                     }
                 }
             }
         }
         .scrollDismissesKeyboard(.interactively)
+        .onDisappear {
+            cleanupSavedMealOnExit()
+        }
     }
 
     private var imageSection: some View {
@@ -118,7 +122,7 @@ struct AnalysisView: View {
                 .multilineTextAlignment(.center)
 
             Button("Try Again") {
-                onDismiss()
+                dismissAnalysis()
             }
             .buttonStyle(.borderedProminent)
             .padding(.top)
@@ -313,7 +317,7 @@ struct AnalysisView: View {
                 }
 
                 Button {
-                    onDismiss()
+                    dismissAnalysis()
                 } label: {
                     Text("Done")
                         .frame(maxWidth: .infinity)
@@ -353,13 +357,26 @@ struct AnalysisView: View {
 
         Task {
             do {
-                _ = try await WallService.shared.publish(meal: meal, in: modelContext)
-                wallPostMessage = "Posted to Wall."
+                let post = try await WallService.shared.publish(meal: meal, in: modelContext)
+                wallPostMessage = post.status == "pending_review"
+                    ? "Submitted for review. It will appear on the Wall after moderation."
+                    : "Posted to Wall."
             } catch {
                 wallPostError = error.localizedDescription
             }
             isPostingToWall = false
         }
+    }
+
+    private func dismissAnalysis() {
+        guard !didRunDismissCleanup else { return }
+        didRunDismissCleanup = true
+        onDismiss()
+    }
+
+    private func cleanupSavedMealOnExit() {
+        guard savedMeal != nil else { return }
+        dismissAnalysis()
     }
 
     private func errorSection(_ error: String) -> some View {

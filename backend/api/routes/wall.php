@@ -12,7 +12,7 @@ if ($method === 'GET' && !$id) {
     return;
 }
 if ($method === 'POST' && !$id) {
-    publish_wall_post($pdo, $user);
+    publish_wall_post($pdo, $user, $CONFIG);
     return;
 }
 if ($method === 'GET' && $id && $action === 'photo') {
@@ -89,7 +89,7 @@ function list_wall_posts(PDO $pdo, array $user): void {
     json_ok(['posts' => $posts]);
 }
 
-function publish_wall_post(PDO $pdo, array $user): void {
+function publish_wall_post(PDO $pdo, array $user, array $config): void {
     $body = read_json_body();
     $mealId = (string)require_field($body, 'mealId');
     if (!uuid_valid($mealId)) json_error(400, 'Invalid meal id.');
@@ -102,7 +102,7 @@ function publish_wall_post(PDO $pdo, array $user): void {
     $existingStmt->execute([':u' => $user['id'], ':m' => $mealId]);
     $existing = $existingStmt->fetch();
     if ($existing) {
-        if ($existing['status'] !== 'active') {
+        if (!in_array($existing['status'], ['active', 'pending_review'], true)) {
             json_error(409, 'This meal is not eligible to be reposted.');
         }
         $post = fetch_wall_post($pdo, $existing['id'], $user['id']);
@@ -153,6 +153,7 @@ function publish_wall_post(PDO $pdo, array $user): void {
     if (empty($foodNames)) json_error(400, 'A wall post must include at least one food item.');
     $foodNames = array_slice(array_values(array_unique($foodNames)), 0, 8);
 
+    $postStatus = wall_public_status_for_photo($config, $user['id'], (string)$meal['photo_id']);
     $postId = uuid_v4();
     $now = db_now();
     $pdo->prepare(
@@ -160,7 +161,7 @@ function publish_wall_post(PDO $pdo, array $user): void {
             (id, user_id, meal_id, photo_id, meal_type, food_names, total_min, total_max, total_avg,
              protein, carbs, fat, status, posted_at, updated_at)
          VALUES
-            (:id, :u, :m, :p, :mt, :foods, :min, :max, :avg, :protein, :carbs, :fat, "active", :now, :now)'
+            (:id, :u, :m, :p, :mt, :foods, :min, :max, :avg, :protein, :carbs, :fat, :status, :now, :now)'
     )->execute([
         ':id' => $postId,
         ':u' => $user['id'],
@@ -174,6 +175,7 @@ function publish_wall_post(PDO $pdo, array $user): void {
         ':protein' => $hasProtein ? round($protein, 1) : null,
         ':carbs' => $hasCarbs ? round($carbs, 1) : null,
         ':fat' => $hasFat ? round($fat, 1) : null,
+        ':status' => $postStatus,
         ':now' => $now,
     ]);
 
@@ -208,7 +210,10 @@ function set_wall_like(PDO $pdo, array $user, string $postId, bool $liked): void
 }
 
 function report_wall_post(PDO $pdo, array $user, string $postId): void {
-    wall_require_visible_post($pdo, $postId, $user['id']);
+    $post = wall_require_visible_post($pdo, $postId, $user['id']);
+    if ($post['user_id'] === $user['id']) {
+        json_error(400, 'Use delete to remove your own post.');
+    }
     $body = read_json_body();
     $reason = (string)require_field($body, 'reason');
     $allowed = ['offensive_content', 'non_food_image', 'privacy_concern', 'spam', 'other'];
@@ -368,6 +373,7 @@ function wall_post_payload(array $row, string $viewerUserId): array {
         'protein' => $row['protein'] !== null ? (float)$row['protein'] : null,
         'carbs' => $row['carbs'] !== null ? (float)$row['carbs'] : null,
         'fat' => $row['fat'] !== null ? (float)$row['fat'] : null,
+        'status' => $row['status'],
         'postedAt' => mysql_to_iso($row['posted_at']),
         'likeCount' => (int)$row['like_count'],
         'isLiked' => !empty($row['is_liked']),
@@ -378,10 +384,36 @@ function wall_post_payload(array $row, string $viewerUserId): array {
 
 function wall_first_name(?string $name): string {
     $source = trim((string)($name ?: ''));
+    $source = preg_replace('/[\x00-\x1F\x7F]/', '', $source);
     $source = preg_replace('/\s+/', ' ', trim($source));
     if ($source === '') return 'Someone';
-    $parts = explode(' ', $source);
-    return substr($parts[0], 0, 40);
+    $parts = preg_split('/\s+/', $source) ?: [];
+    $rawFirst = (string)($parts[0] ?? '');
+    if (!wall_public_name_token_is_safe($rawFirst)) return 'Someone';
+
+    $first = preg_replace("/[^\p{L}\p{M}'-]/u", '', $rawFirst);
+    $first = trim((string)$first, "'-");
+    if ($first === '' || !wall_public_name_token_is_safe($first)) return 'Someone';
+
+    return wall_str_limit($first, 40);
+}
+
+function wall_public_name_token_is_safe(string $name): bool {
+    if ($name === '') return false;
+    if (wall_text_has_blocked_term($name)) return false;
+    if (preg_match('/https?:\/\/|www\.|@/i', $name)) return false;
+    if (preg_match('/[a-z0-9-]+\.[a-z]{2,}/i', $name)) return false;
+    if (preg_match('/[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}/i', $name)) return false;
+    if (preg_match('/\+?\d[\d\s().-]{5,}\d/', $name)) return false;
+    if (preg_match('/\d{3,}/', $name)) return false;
+    return true;
+}
+
+function wall_str_limit(string $text, int $limit): string {
+    if (function_exists('mb_substr')) {
+        return mb_substr($text, 0, $limit, 'UTF-8');
+    }
+    return substr($text, 0, $limit);
 }
 
 function wall_text_has_blocked_term(string $text): bool {
@@ -394,4 +426,91 @@ function wall_text_has_blocked_term(string $text): bool {
         if (preg_match($pattern, $text)) return true;
     }
     return false;
+}
+
+function wall_public_status_for_photo(array $config, string $userId, string $photoId): string {
+    $moderation = $config['wall_image_moderation'] ?? [];
+    $mode = strtolower((string)($moderation['mode'] ?? 'hold'));
+    if ($mode !== 'openai') {
+        return 'pending_review';
+    }
+
+    $apiKey = trim((string)($moderation['openai_api_key'] ?? ''));
+    if ($apiKey === '') {
+        $apiKey = trim((string)(getenv('OPENAI_API_KEY') ?: ''));
+    }
+    if ($apiKey === '') {
+        return 'pending_review';
+    }
+
+    $path = photo_path($config, $userId, $photoId);
+    if (!file_exists($path)) {
+        json_error(404, 'Photo file missing.');
+    }
+
+    $decision = wall_openai_photo_moderation_decision($path, $apiKey, (string)($moderation['openai_model'] ?? 'omni-moderation-latest'));
+    if ($decision === 'unsafe') {
+        json_error(400, 'This photo cannot be posted to the public wall.');
+    }
+
+    return $decision === 'safe' ? 'active' : 'pending_review';
+}
+
+function wall_openai_photo_moderation_decision(string $path, string $apiKey, string $model): string {
+    if (!function_exists('curl_init')) {
+        error_log('Wall photo moderation unavailable: curl extension missing.');
+        return 'unknown';
+    }
+
+    $bytes = @file_get_contents($path);
+    if ($bytes === false) {
+        return 'unknown';
+    }
+
+    $payload = [
+        'model' => $model !== '' ? $model : 'omni-moderation-latest',
+        'input' => [
+            ['type' => 'text', 'text' => 'Public food-wall meal photo. Check for objectionable, sexual, self-harm, violent, graphic, or otherwise unsafe imagery before publication.'],
+            [
+                'type' => 'image_url',
+                'image_url' => [
+                    'url' => 'data:image/jpeg;base64,' . base64_encode($bytes),
+                ],
+            ],
+        ],
+    ];
+
+    $ch = curl_init('https://api.openai.com/v1/moderations');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 12,
+    ]);
+    $raw = curl_exec($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($raw === false || $status < 200 || $status >= 300) {
+        error_log('Wall photo moderation unavailable: HTTP ' . $status . ' ' . $curlError);
+        return 'unknown';
+    }
+
+    $data = json_decode((string)$raw, true);
+    if (!is_array($data)) {
+        return 'unknown';
+    }
+
+    $result = $data['results'][0] ?? null;
+    if (!is_array($result)) {
+        return 'unknown';
+    }
+
+    return !empty($result['flagged']) ? 'unsafe' : 'safe';
 }

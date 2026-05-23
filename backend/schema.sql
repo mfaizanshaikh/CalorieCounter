@@ -89,7 +89,7 @@ CREATE TABLE public_wall_posts (
   protein         DOUBLE          NULL,
   carbs           DOUBLE          NULL,
   fat             DOUBLE          NULL,
-  status          ENUM('active','hidden','removed') NOT NULL DEFAULT 'active',
+  status          ENUM('active','pending_review','hidden','removed') NOT NULL DEFAULT 'pending_review',
   posted_at       DATETIME        NOT NULL,
   updated_at      DATETIME        NOT NULL,
   deleted_at      DATETIME        NULL,

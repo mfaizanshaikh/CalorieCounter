@@ -37,6 +37,16 @@ return [
     // only if your install puts api/ somewhere unusual.
     'uploads_dir' => __DIR__ . '/../../../private_uploads',
 
+    // Public wall photo safety. The default "hold" mode keeps newly posted
+    // photos out of the public feed until you review them manually. Set mode
+    // to "openai" and provide a server-side API key to publish only after the
+    // image moderation endpoint returns a safe result.
+    'wall_image_moderation' => [
+        'mode' => 'hold', // "hold" or "openai"
+        'openai_api_key' => null,
+        'openai_model' => 'omni-moderation-latest',
+    ],
+
     // Token lifetimes.
     'access_token_ttl_seconds'  => 15 * 60,                   // 15 minutes
     'refresh_token_ttl_seconds' => 60 * 60 * 24 * 60,         // 60 days

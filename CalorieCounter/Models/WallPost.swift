@@ -46,6 +46,7 @@ struct WallPost: Identifiable, Decodable, Equatable {
     let protein: Double?
     let carbs: Double?
     let fat: Double?
+    let status: String
     let postedAt: Date
     var likeCount: Int
     var isLiked: Bool
