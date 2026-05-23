@@ -68,6 +68,14 @@ GoogleService-Info.plist
 php-proxy/
 cloudflare-proxy/
 
+# Backend secrets (defence in depth — backend/.gitignore also covers these).
+backend/api/config.php
+backend/api/vendor/
+backend/vendor/
+backend/vendor.zip
+backend/composer.lock
+backend/private_uploads/
+
 # Large ML model files
 *.gguf
 

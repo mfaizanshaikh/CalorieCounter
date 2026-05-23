@@ -171,18 +171,8 @@ class AnalysisViewModel: ObservableObject {
             assumptions: result.assumptions
         )
 
-        modelContext.insert(entry)
-
-        do {
-            try modelContext.save()
-            return entry
-        } catch {
-            errorMessage = "Failed to save meal: \(error.localizedDescription)"
-#if DEBUG
-            print("Save error: \(error)")
-#endif
-            return nil
-        }
+        SyncStore.save(meal: entry, in: modelContext)
+        return entry
     }
 
     func reset() {

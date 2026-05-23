@@ -1,0 +1,10 @@
+# NEVER commit the real config — contains DB credentials and JWT signing secret.
+api/config.php
+
+# Composer artifacts — install locally and upload the vendor/ folder via FTP.
+api/vendor/
+composer.lock
+
+# Any local uploads that got created during testing.
+private_uploads/
+api/uploads/

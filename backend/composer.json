@@ -1,0 +1,24 @@
+{
+    "name": "mfaizanshaikh/calorie-coach-backend",
+    "description": "Backend API for AI Calorie Coach iOS app (Google/Apple sign-in + meal sync).",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1",
+        "firebase/php-jwt": "^6.10",
+        "google/apiclient": "^2.15",
+        "ramsey/uuid": "^4.7"
+    },
+    "config": {
+        "platform": {
+            "php": "8.3"
+        },
+        "audit": {
+            "ignore": {
+                "PKSA-y2cr-5h3j-g3ys": "CVE-2025-45769 (LOW). Advisory is about library accepting weak secrets. Our jwt_secret is generated via `openssl rand -base64 48` (384 bits) and used only for HS256 sign/verify in api/lib/jwt.php — no algorithm negotiation, no kid lookup. Not exploitable in this usage. No 7.x release exists to upgrade to as of 2026-05-23."
+            }
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

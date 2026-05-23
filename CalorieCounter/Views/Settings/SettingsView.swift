@@ -11,6 +11,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                AccountSection()
                 apiKeySection
                 calorieGoalSection
                 displaySection
@@ -216,14 +217,8 @@ struct SettingsView: View {
 
     // MARK: - Actions
     private func clearAllData() {
-        do {
-            try modelContext.delete(model: MealEntry.self)
-            try modelContext.delete(model: FoodItem.self)
-        } catch {
-#if DEBUG
-            print("Failed to clear data: \(error)")
-#endif
-        }
+        // Queue server-side deletes for each meal so cloud data stays in sync.
+        SyncStore.deleteAllMeals(in: modelContext)
     }
 }
 

@@ -1,0 +1,31 @@
+# All requests under /api/ are routed through index.php which dispatches them.
+# Static files (vendor/, lib/, routes/) are blocked from direct access.
+
+RewriteEngine On
+
+# Force HTTPS.
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Block direct access to config / lib / routes / vendor.
+RewriteRule ^(config\.php|config\.example\.php) - [F,L]
+RewriteRule ^lib/ - [F,L]
+RewriteRule ^routes/ - [F,L]
+RewriteRule ^vendor/ - [F,L]
+
+# Everything else → index.php.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Hide PHP version.
+<IfModule mod_headers.c>
+    Header unset X-Powered-By
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Default file uploads can exceed 4MB; cap at the photo limit.
+php_value upload_max_filesize 5M
+php_value post_max_size 6M

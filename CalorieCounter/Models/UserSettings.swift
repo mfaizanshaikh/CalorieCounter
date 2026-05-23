@@ -52,6 +52,7 @@ class UserSettings: ObservableObject {
     @Published var dailyCalorieGoal: Int {
         didSet {
             defaults.set(dailyCalorieGoal, forKey: Keys.dailyCalorieGoal)
+            SyncStore.settingsChanged()
         }
     }
 
@@ -59,6 +60,7 @@ class UserSettings: ObservableObject {
     @Published var showCalorieRange: Bool {
         didSet {
             defaults.set(showCalorieRange, forKey: Keys.showCalorieRange)
+            SyncStore.settingsChanged()
         }
     }
 
@@ -66,6 +68,7 @@ class UserSettings: ObservableObject {
     @Published var hasCompletedOnboarding: Bool {
         didSet {
             defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding)
+            SyncStore.settingsChanged()
         }
     }
 

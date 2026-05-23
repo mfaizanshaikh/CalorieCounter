@@ -165,8 +165,7 @@ struct MealDetailView: View {
     }
 
     private func deleteMeal() {
-        modelContext.delete(entry)
-        try? modelContext.save()
+        SyncStore.delete(meal: entry, in: modelContext)
         dismiss()
     }
 }
@@ -357,7 +356,8 @@ struct FoodItemEditSheet: View {
         entry.totalCaloriesMax = total
         entry.totalCaloriesAvg = total
 
-        try? modelContext.save()
+        entry.updatedAt = Date()
+        SyncStore.save(meal: entry, in: modelContext)
         dismiss()
     }
 
@@ -371,10 +371,10 @@ struct FoodItemEditSheet: View {
         entry.totalCaloriesAvg = total
 
         if entry.foodItems.isEmpty {
-            modelContext.delete(entry)
+            SyncStore.delete(meal: entry, in: modelContext)
+        } else {
+            SyncStore.save(meal: entry, in: modelContext)
         }
-
-        try? modelContext.save()
         dismiss()
         onDelete()
     }

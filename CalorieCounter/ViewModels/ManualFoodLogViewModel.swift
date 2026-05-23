@@ -192,7 +192,7 @@ class ManualFoodLogViewModel: ObservableObject {
         )
         guard (try? context.fetchCount(descriptor)) == 0 else { return }
 
-        context.insert(SavedFood(
+        let food = SavedFood(
             name: result.name,
             caloriesPer100g: result.caloriesPer100g,
             proteinPer100g: result.proteinPer100g,
@@ -203,8 +203,8 @@ class ManualFoodLogViewModel: ObservableObject {
             defaultServingSizeG: result.defaultServingSizeG,
             defaultServingLabel: result.defaultServingLabel,
             isFromAI: true
-        ))
-        try? context.save()
+        )
+        SyncStore.save(savedFood: food, in: context)
     }
 
     func clearSearch() {
@@ -247,8 +247,7 @@ class ManualFoodLogViewModel: ObservableObject {
         let name = food.name
         let descriptor = FetchDescriptor<SavedFood>(predicate: #Predicate { $0.name == name })
         if let saved = try? context.fetch(descriptor).first {
-            saved.searchCount += 1
-            try? context.save()
+            SyncStore.recordSearch(of: saved, in: context)
         }
     }
 
@@ -356,6 +355,8 @@ class ManualFoodLogViewModel: ObservableObject {
             existing.totalCaloriesMin += total
             existing.totalCaloriesMax += total
             existing.totalCaloriesAvg += total
+            SyncStore.save(meal: existing, in: modelContext)
+            return true
         } else {
             let entry = MealEntry(
                 mealType: mealType,
@@ -364,17 +365,8 @@ class ManualFoodLogViewModel: ObservableObject {
                 totalCaloriesAvg: total,
                 foodItems: newItems
             )
-            modelContext.insert(entry)
-        }
-
-        do {
-            try modelContext.save()
+            SyncStore.save(meal: entry, in: modelContext)
             return true
-        } catch {
-#if DEBUG
-            print("ManualFoodLogViewModel: save failed: \(error)")
-#endif
-            return false
         }
     }
 }

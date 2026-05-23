@@ -36,6 +36,13 @@ final class MealEntry {
 
     var assumptions: [String]
 
+    // Sync metadata (added 2026-05-22). All optional / defaulted so SwiftData
+    // lightweight migration can populate them for existing 1.2 users.
+    var ownerUserId: UUID?
+    var updatedAt: Date = Date()
+    var deletedAt: Date?
+    var photoRemoteId: String?
+
     init(
         id: UUID = UUID(),
         date: Date = Date(),
@@ -45,7 +52,11 @@ final class MealEntry {
         totalCaloriesAvg: Int = 0,
         imageData: Data? = nil,
         foodItems: [FoodItem] = [],
-        assumptions: [String] = []
+        assumptions: [String] = [],
+        ownerUserId: UUID? = nil,
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil,
+        photoRemoteId: String? = nil
     ) {
         self.id = id
         self.date = date
@@ -56,6 +67,10 @@ final class MealEntry {
         self.imageData = imageData
         self.foodItems = foodItems
         self.assumptions = assumptions
+        self.ownerUserId = ownerUserId
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+        self.photoRemoteId = photoRemoteId
     }
 }
 

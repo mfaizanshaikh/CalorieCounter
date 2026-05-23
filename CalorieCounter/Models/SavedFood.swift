@@ -22,6 +22,13 @@ final class SavedFood {
 
     var dateAdded: Date
 
+    // Sync metadata (added 2026-05-22). Bundled foods stay local-only —
+    // they are re-seeded from FoodDatabase.json on each install. Only
+    // user-added foods (manual entries or AI search results) sync.
+    var ownerUserId: UUID?
+    var updatedAt: Date = Date()
+    var deletedAt: Date?
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -35,7 +42,10 @@ final class SavedFood {
         defaultServingLabel: String = "100 g",
         searchCount: Int = 0,
         isFromAI: Bool = false,
-        dateAdded: Date = Date()
+        dateAdded: Date = Date(),
+        ownerUserId: UUID? = nil,
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -50,6 +60,9 @@ final class SavedFood {
         self.searchCount = searchCount
         self.isFromAI = isFromAI
         self.dateAdded = dateAdded
+        self.ownerUserId = ownerUserId
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
     }
 }
 
