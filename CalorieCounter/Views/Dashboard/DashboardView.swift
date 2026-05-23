@@ -3,9 +3,17 @@ import SwiftData
 import Charts
 
 struct DashboardView: View {
-    @Query(sort: \MealEntry.date, order: .reverse) private var entries: [MealEntry]
+    @Query private var entries: [MealEntry]
     @StateObject private var viewModel = DashboardViewModel()
     @ScaledMetric private var caloriesFontSize: CGFloat = 56
+
+    init() {
+        _entries = Query(
+            filter: MealEntry.currentUserScope(MealEntry.currentUserIdFromKeychain),
+            sort: \.date,
+            order: .reverse
+        )
+    }
 
     var body: some View {
         NavigationStack {

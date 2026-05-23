@@ -1,15 +1,23 @@
 import SwiftUI
 import SwiftData
+import FirebaseCore
+import GoogleSignIn
 
 @main
 struct CalorieCounterApp: App {
     let sharedModelContainer: ModelContainer
+    @StateObject private var authService = AuthService.shared
+    @StateObject private var syncCoordinator = SyncCoordinator.shared
 
     init() {
+        FirebaseApp.configure()
+
         let schema = Schema([
             MealEntry.self,
             FoodItem.self,
             SavedFood.self,
+            AuthUser.self,
+            SyncOp.self,
         ])
 
         // Try persistent (on-disk) store first.
@@ -34,7 +42,18 @@ struct CalorieCounterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AuthGateView {
+                ContentView()
+            }
+            .environmentObject(authService)
+            .environmentObject(syncCoordinator)
+            .task {
+                syncCoordinator.attach(container: sharedModelContainer)
+                await authService.restoreSession()
+            }
+            .onOpenURL { url in
+                GIDSignIn.sharedInstance.handle(url)
+            }
         }
         .modelContainer(sharedModelContainer)
     }

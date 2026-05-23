@@ -2,9 +2,17 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    @Query(sort: \MealEntry.date, order: .reverse) private var entries: [MealEntry]
+    @Query private var entries: [MealEntry]
     @StateObject private var viewModel = HistoryViewModel()
     @Environment(\.modelContext) private var modelContext
+
+    init() {
+        _entries = Query(
+            filter: MealEntry.currentUserScope(MealEntry.currentUserIdFromKeychain),
+            sort: \.date,
+            order: .reverse
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -92,21 +100,7 @@ struct MealEntryRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let imageData = entry.imageData,
-               let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            } else {
-                Image(systemName: "photo")
-                    .font(.title)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 60, height: 60)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
+            MealPhotoView(entry: entry, size: 60, cornerRadius: 8)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {

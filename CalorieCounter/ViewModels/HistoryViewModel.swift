@@ -48,14 +48,6 @@ class HistoryViewModel: ObservableObject {
     }
 
     func deleteEntry(_ entry: MealEntry, from modelContext: ModelContext) {
-        modelContext.delete(entry)
-
-        do {
-            try modelContext.save()
-        } catch {
-#if DEBUG
-            print("Failed to delete entry: \(error)")
-#endif
-        }
+        SyncStore.delete(meal: entry, in: modelContext)
     }
 }

@@ -26,6 +26,10 @@ final class FoodItem {
     @Relationship(inverse: \MealEntry.foodItems)
     var mealEntry: MealEntry?
 
+    // Sync metadata (added 2026-05-22).
+    var updatedAt: Date = Date()
+    var deletedAt: Date?
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -43,7 +47,9 @@ final class FoodItem {
         transFat: Double? = nil,
         cholesterol: Double? = nil,
         sodium: Double? = nil,
-        potassium: Double? = nil
+        potassium: Double? = nil,
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -62,6 +68,8 @@ final class FoodItem {
         self.cholesterol = cholesterol
         self.sodium = sodium
         self.potassium = potassium
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
     }
 }
 

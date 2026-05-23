@@ -16,5 +16,22 @@
 	<false/>
 	<key>UISupportsDocumentBrowser</key>
 	<false/>
+	<!--
+	  Google Sign-In requires the reversed OAuth client ID as a URL scheme.
+	  After downloading the GoogleService-Info.plist with iOS Sign-In enabled,
+	  copy the REVERSED_CLIENT_ID value into the string below.
+	  See backend/README.md → "Google Cloud setup" for the exact steps.
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.807908453055-bt3p1mjlsi702sj2ci19ssfum1qus4dj</string>
+			</array>
+		</dict>
+	</array>
+	<key>BackendBaseURL</key>
+	<string>$(BACKEND_BASE_URL)</string>
 </dict>
 </plist>
