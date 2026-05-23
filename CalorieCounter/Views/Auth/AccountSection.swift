@@ -5,6 +5,10 @@ import SwiftData
 struct AccountSection: View {
     @EnvironmentObject private var auth: AuthService
     @EnvironmentObject private var sync: SyncCoordinator
+    @State private var showingNameEditor = false
+    @State private var draftName = ""
+    @State private var isSavingName = false
+    @State private var nameError: String?
 
     var body: some View {
         Section {
@@ -20,8 +24,24 @@ struct AccountSection: View {
                     .clipShape(Circle())
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(user.name ?? user.email).font(.headline)
+                        Text(displayName(for: user)).font(.headline)
                         Text(user.email).font(.caption).foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    if isSavingName {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Button {
+                            beginEditingName(for: user)
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.body)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Edit name")
                     }
                 }
             }
@@ -39,11 +59,51 @@ struct AccountSection: View {
         } header: {
             Text("Account")
         }
+        .alert("Edit Name", isPresented: $showingNameEditor) {
+            TextField("Name", text: $draftName)
+                .textContentType(.name)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.words)
+
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                saveName()
+            }
+        } message: {
+            Text("Leave blank to remove your name.")
+        }
+        .alert("Couldn't update name", isPresented: .constant(nameError != nil)) {
+            Button("OK") { nameError = nil }
+        } message: {
+            Text(nameError ?? "")
+        }
+    }
+
+    private func beginEditingName(for user: RemoteUser) {
+        draftName = user.name ?? ""
+        showingNameEditor = true
+    }
+
+    private func saveName() {
+        isSavingName = true
+        Task { @MainActor in
+            do {
+                try await auth.updateName(draftName)
+            } catch {
+                nameError = error.localizedDescription
+            }
+            isSavingName = false
+        }
     }
 
     private func initials(_ user: RemoteUser) -> String {
-        let parts = (user.name ?? user.email).split(separator: " ").prefix(2)
+        let parts = displayName(for: user).split(separator: " ").prefix(2)
         return parts.compactMap { $0.first.map(String.init) }.joined().uppercased()
+    }
+
+    private func displayName(for user: RemoteUser) -> String {
+        let name = user.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? user.email : name
     }
 
     private var syncIconName: String {

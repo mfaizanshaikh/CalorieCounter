@@ -160,6 +160,19 @@ final class AuthService: ObservableObject {
         SyncCoordinator.shared.resetForSignOut()
     }
 
+    // MARK: - Profile updates
+
+    func updateName(_ name: String) async throws {
+        struct Req: Encodable { let name: String }
+
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let user: RemoteUser = try await APIClient.shared.patch(
+            "auth/me",
+            body: Req(name: trimmedName)
+        )
+        self.currentUser = user
+    }
+
     // MARK: - Token plumbing
 
     fileprivate func accessToken() async -> String? {

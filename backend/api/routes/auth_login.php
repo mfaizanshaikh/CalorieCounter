@@ -52,8 +52,8 @@ try {
     $now = db_now();
     if ($user) {
         $userId = $user['id'];
-        $pdo->prepare('UPDATE users SET email = :e, name = COALESCE(:n, name), photo_url = COALESCE(:pu, photo_url), updated_at = :u, deleted_at = NULL WHERE id = :id')
-            ->execute([':e' => $email, ':n' => $name, ':pu' => $picture, ':u' => $now, ':id' => $userId]);
+        $pdo->prepare('UPDATE users SET email = :e, photo_url = COALESCE(:pu, photo_url), updated_at = :u, deleted_at = NULL WHERE id = :id')
+            ->execute([':e' => $email, ':pu' => $picture, ':u' => $now, ':id' => $userId]);
     } else {
         $userId = uuid_v4();
         $pdo->prepare('INSERT INTO users (id, email, name, photo_url, provider, provider_sub, created_at, updated_at) VALUES (:id, :e, :n, :pu, :p, :s, :c, :u)')

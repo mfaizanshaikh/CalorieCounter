@@ -69,7 +69,7 @@ function route(string $method, string $path, array $CONFIG): void {
     // All routes below require auth.
     $user = require_auth($CONFIG);
 
-    if ($method === 'GET'  && $path === '/auth/me')       { require __DIR__ . '/routes/auth_me.php';      return; }
+    if (($method === 'GET' || $method === 'PATCH') && $path === '/auth/me') { require __DIR__ . '/routes/auth_me.php'; return; }
     if ($method === 'POST' && $path === '/auth/logout')   { require __DIR__ . '/routes/auth_logout.php';  return; }
     if ($method === 'DELETE' && $path === '/account')     { require __DIR__ . '/routes/account_delete.php'; return; }
 
