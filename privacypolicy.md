@@ -61,11 +61,11 @@ Public wall posts may show:
 - Food item names
 - Calories and meal-level macronutrients
 - Posted time
-- Like and save counts
+- Like counts
 
 Public wall posts do not show your email address, full name, profile photo, daily totals, location, comments, or private AI assumptions.
 
-The app also stores wall likes, saved inspiration posts, reports, and blocked-user relationships needed to operate the wall, moderation, and safety features.
+The app also stores wall likes, reports, and blocked-user relationships needed to operate the wall, moderation, and safety features.
 
 ### e) Saved Foods
 
@@ -182,7 +182,7 @@ Your data is stored in two places:
 - Locally on your device
 - On our server, when you are signed in
 
-Server-stored data may include your account profile, meal records, food items, saved foods, settings, meal photos, public wall posts, likes, saves, reports, and block relationships.
+Server-stored data may include your account profile, meal records, food items, saved foods, settings, meal photos, public wall posts, likes, reports, and block relationships.
 
 Meal photos are stored in a private server upload directory outside the public web root and are served only through authenticated app requests.
 
@@ -208,7 +208,7 @@ You can delete data in the app:
 
 Deleting a meal removes public wall posts based on that meal.
 
-Deleting your account removes your account data from our server, including meal history, saved foods, settings, refresh tokens, uploaded meal photos, public wall posts, wall likes, wall saves, wall reports, and wall blocks associated with your account.
+Deleting your account removes your account data from our server, including meal history, saved foods, settings, refresh tokens, uploaded meal photos, public wall posts, wall likes, wall reports, and wall blocks associated with your account.
 
 Deleting your account does not automatically delete data already processed by third-party providers such as OpenAI, Apple, Google, or Firebase. Those providers handle data according to their own policies.
 

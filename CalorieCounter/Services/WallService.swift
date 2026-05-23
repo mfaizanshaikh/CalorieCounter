@@ -49,49 +49,40 @@ final class WallService {
     }
 
     func setLiked(_ liked: Bool, postId: UUID) async throws -> WallActionState {
+        let postPathId = pathId(postId)
         if liked {
             let response: WallActionStateResponse = try await api.post(
-                "wall/posts/\(postId.uuidString)/like",
+                "wall/posts/\(postPathId)/like",
                 body: EmptyBody()
             )
             return response.state
         }
         let response: WallActionStateResponse = try await api.deleteReturning(
-            "wall/posts/\(postId.uuidString)/like"
-        )
-        return response.state
-    }
-
-    func setSaved(_ saved: Bool, postId: UUID) async throws -> WallActionState {
-        if saved {
-            let response: WallActionStateResponse = try await api.post(
-                "wall/posts/\(postId.uuidString)/save",
-                body: EmptyBody()
-            )
-            return response.state
-        }
-        let response: WallActionStateResponse = try await api.deleteReturning(
-            "wall/posts/\(postId.uuidString)/save"
+            "wall/posts/\(postPathId)/like"
         )
         return response.state
     }
 
     func report(postId: UUID, reason: WallReportReason, details: String?) async throws {
         _ = try await api.post(
-            "wall/posts/\(postId.uuidString)/report",
+            "wall/posts/\(pathId(postId))/report",
             body: ReportWallPostRequest(reason: reason.rawValue, details: details)
         ) as WallStatusResponse
     }
 
     func block(userId: UUID) async throws {
         _ = try await api.post(
-            "wall/users/\(userId.uuidString)/block",
+            "wall/users/\(pathId(userId))/block",
             body: EmptyBody()
         ) as WallStatusResponse
     }
 
     func delete(postId: UUID) async throws {
-        try await api.delete("wall/posts/\(postId.uuidString)")
+        try await api.delete("wall/posts/\(pathId(postId))")
+    }
+
+    private func pathId(_ id: UUID) -> String {
+        id.uuidString.lowercased()
     }
 }
 
