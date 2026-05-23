@@ -37,7 +37,6 @@ struct WallView: View {
                             WallPostCard(
                                 post: post,
                                 onLike: { Task { await viewModel.toggleLike(post) } },
-                                onSave: { Task { await viewModel.toggleSave(post) } },
                                 onReport: { reportingPost = post },
                                 onBlock: { blockCandidate = post },
                                 onDelete: { deleteCandidate = post }
@@ -134,7 +133,6 @@ struct WallView: View {
 private struct WallPostCard: View {
     let post: WallPost
     let onLike: () -> Void
-    let onSave: () -> Void
     let onReport: () -> Void
     let onBlock: () -> Void
     let onDelete: () -> Void
@@ -225,12 +223,6 @@ private struct WallPostCard: View {
                         .font(.subheadline)
                 }
                 .foregroundStyle(post.isLiked ? .red : .primary)
-
-                Button(action: onSave) {
-                    Label("\(post.saveCount)", systemImage: post.isSaved ? "bookmark.fill" : "bookmark")
-                        .font(.subheadline)
-                }
-                .foregroundStyle(post.isSaved ? .green : .primary)
 
                 Spacer()
             }

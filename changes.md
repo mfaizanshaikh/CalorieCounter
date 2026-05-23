@@ -4,6 +4,25 @@ Running log of changes made to AI Calorie Coach. Newest entry on top. Each entry
 
 ---
 
+## 2026-05-23 — Fix wall likes and remove bookmarks
+
+**Why:** The wall like/bookmark requests were failing with `404 Not found` because iOS sends uppercase UUID path segments while the PHP router only matched lowercase UUIDs. The bookmark option is also no longer part of the wall product surface.
+
+### Changes
+- `CalorieCounter/Views/Wall/WallView.swift` — removed the bookmark button from wall post cards so the only action under a wall photo is the heart/like button.
+- `CalorieCounter/Services/WallService.swift`, `ViewModels/WallViewModel.swift`, `Models/WallPost.swift` — removed wall save/bookmark client calls and state; wall action state now only updates `likeCount` and `isLiked`. Wall UUID path components are sent lowercase.
+- `backend/api/index.php` — UUID route matching is now case-insensitive and route UUID params are canonicalized to lowercase, covering wall likes and the other UUID-backed endpoints.
+- `backend/api/routes/wall.php`, `backend/schema.sql`, `backend/migrations/002_add_public_food_wall.sql` — removed wall save endpoints, save counts, saved-state payload fields, and save-table creation. Trending now ranks from recent likes only.
+- `backend/migrations/003_remove_wall_saves.sql` — drops the old `wall_post_saves` table if the public wall migration was already applied.
+- `privacypolicy.md`, `CalorieCounter/Views/Auth/AccountSection.swift`, `backend/api/routes/account_delete.php` — removed wall-save wording from user-facing and backend documentation text.
+
+### Follow-ups for the user
+- Re-upload `backend/api/index.php` and `backend/api/routes/wall.php` to the server.
+- If `backend/migrations/002_add_public_food_wall.sql` was already applied, run `backend/migrations/003_remove_wall_saves.sql` once in phpMyAdmin.
+- Build and test the wall: heart a post, confirm the count toggles without a 404, and confirm there is no bookmark button under the photo.
+
+---
+
 ## 2026-05-23 — Tighten sign-out teardown + tombstone GC
 
 **Why:** Audit of the prior entry surfaced four issues that the post-login sync pass didn't address: (1) on sign-out, the only thing cancelled was the debounce timer — the in-flight `runSync` could still race the wipe and leave `state = .failed("cancelled")` after the UI had been reset; (2) `PhotoLoader`'s in-memory NSCache kept the previous user's photo bytes resident after sign-out, so a different account on the same process could see them rendered briefly until cache eviction; (3) `restoreSession()` parsed the keychain `userId` and then immediately discarded it (`_ = userId`), leftover from an earlier draft; (4) `applyMerge` set `existing.deletedAt = incoming.deletedAt` for server-side tombstones, hiding the row via the `@Query` predicate but never physically deleting it — meal rows + cascaded `FoodItem` children accumulated forever.

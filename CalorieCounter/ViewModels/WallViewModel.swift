@@ -51,12 +51,6 @@ final class WallViewModel: ObservableObject {
         }
     }
 
-    func toggleSave(_ post: WallPost) async {
-        await updatePostAction(post) {
-            try await service.setSaved(!post.isSaved, postId: post.id)
-        }
-    }
-
     func report(_ post: WallPost, reason: WallReportReason, details: String?) async {
         do {
             try await service.report(postId: post.id, reason: reason, details: details)
@@ -95,9 +89,7 @@ final class WallViewModel: ObservableObject {
             let state = try await action()
             guard let index = posts.firstIndex(where: { $0.id == post.id }) else { return }
             posts[index].likeCount = state.likeCount
-            posts[index].saveCount = state.saveCount
             posts[index].isLiked = state.isLiked
-            posts[index].isSaved = state.isSaved
         } catch {
             errorMessage = error.localizedDescription
         }

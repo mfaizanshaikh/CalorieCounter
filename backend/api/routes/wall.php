@@ -33,16 +33,6 @@ if ($id && $action === 'like') {
         return;
     }
 }
-if ($id && $action === 'save') {
-    if ($method === 'POST') {
-        set_wall_save($pdo, $user, $id, true);
-        return;
-    }
-    if ($method === 'DELETE') {
-        set_wall_save($pdo, $user, $id, false);
-        return;
-    }
-}
 if ($method === 'POST' && $id && $action === 'report') {
     report_wall_post($pdo, $user, $id);
     return;
@@ -217,18 +207,6 @@ function set_wall_like(PDO $pdo, array $user, string $postId, bool $liked): void
     json_ok(['state' => wall_action_state($pdo, $postId, $user['id'])]);
 }
 
-function set_wall_save(PDO $pdo, array $user, string $postId, bool $saved): void {
-    wall_require_visible_post($pdo, $postId, $user['id']);
-    if ($saved) {
-        $pdo->prepare('INSERT IGNORE INTO wall_post_saves (post_id, user_id, created_at) VALUES (:p, :u, :n)')
-            ->execute([':p' => $postId, ':u' => $user['id'], ':n' => db_now()]);
-    } else {
-        $pdo->prepare('DELETE FROM wall_post_saves WHERE post_id = :p AND user_id = :u')
-            ->execute([':p' => $postId, ':u' => $user['id']]);
-    }
-    json_ok(['state' => wall_action_state($pdo, $postId, $user['id'])]);
-}
-
 function report_wall_post(PDO $pdo, array $user, string $postId): void {
     wall_require_visible_post($pdo, $postId, $user['id']);
     $body = read_json_body();
@@ -342,24 +320,17 @@ function wall_action_state(PDO $pdo, string $postId, string $viewerUserId): arra
     $stmt = $pdo->prepare(
         'SELECT
             (SELECT COUNT(*) FROM wall_post_likes l WHERE l.post_id = :p_likes) AS like_count,
-            (SELECT COUNT(*) FROM wall_post_saves s WHERE s.post_id = :p_saves) AS save_count,
-            EXISTS(SELECT 1 FROM wall_post_likes l2 WHERE l2.post_id = :p_liked AND l2.user_id = :viewer_liked) AS is_liked,
-            EXISTS(SELECT 1 FROM wall_post_saves s2 WHERE s2.post_id = :p_saved AND s2.user_id = :viewer_saved) AS is_saved'
+            EXISTS(SELECT 1 FROM wall_post_likes l2 WHERE l2.post_id = :p_liked AND l2.user_id = :viewer_liked) AS is_liked'
     );
     $stmt->execute([
         ':p_likes' => $postId,
-        ':p_saves' => $postId,
         ':p_liked' => $postId,
         ':viewer_liked' => $viewerUserId,
-        ':p_saved' => $postId,
-        ':viewer_saved' => $viewerUserId,
     ]);
     $row = $stmt->fetch() ?: [];
     return [
         'likeCount' => (int)($row['like_count'] ?? 0),
-        'saveCount' => (int)($row['save_count'] ?? 0),
         'isLiked' => !empty($row['is_liked']),
-        'isSaved' => !empty($row['is_saved']),
     ];
 }
 
@@ -370,13 +341,9 @@ function wall_post_select_sql(string $where, string $order, int $limit): string 
             p.total_min, p.total_max, p.total_avg, p.protein, p.carbs, p.fat,
             p.status, p.posted_at, u.name,
             (SELECT COUNT(*) FROM wall_post_likes l WHERE l.post_id = p.id) AS like_count,
-            (SELECT COUNT(*) FROM wall_post_saves s WHERE s.post_id = p.id) AS save_count,
             EXISTS(SELECT 1 FROM wall_post_likes l2 WHERE l2.post_id = p.id AND l2.user_id = :viewer) AS is_liked,
-            EXISTS(SELECT 1 FROM wall_post_saves s2 WHERE s2.post_id = p.id AND s2.user_id = :viewer) AS is_saved,
             (
                 (SELECT COUNT(*) FROM wall_post_likes rl WHERE rl.post_id = p.id AND rl.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)) * 3
-                +
-                (SELECT COUNT(*) FROM wall_post_saves rs WHERE rs.post_id = p.id AND rs.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)) * 2
             ) AS recent_score
         FROM public_wall_posts p
         JOIN users u ON u.id = p.user_id
@@ -403,9 +370,7 @@ function wall_post_payload(array $row, string $viewerUserId): array {
         'fat' => $row['fat'] !== null ? (float)$row['fat'] : null,
         'postedAt' => mysql_to_iso($row['posted_at']),
         'likeCount' => (int)$row['like_count'],
-        'saveCount' => (int)$row['save_count'],
         'isLiked' => !empty($row['is_liked']),
-        'isSaved' => !empty($row['is_saved']),
         'isMine' => $row['user_id'] === $viewerUserId,
         'photoPath' => 'wall/posts/' . $row['id'] . '/photo',
     ];

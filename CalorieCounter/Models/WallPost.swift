@@ -48,9 +48,7 @@ struct WallPost: Identifiable, Decodable, Equatable {
     let fat: Double?
     let postedAt: Date
     var likeCount: Int
-    var saveCount: Int
     var isLiked: Bool
-    var isSaved: Bool
     let isMine: Bool
     let photoPath: String
 
@@ -69,9 +67,7 @@ struct WallPostResponse: Decodable {
 
 struct WallActionState: Decodable {
     let likeCount: Int
-    let saveCount: Int
     let isLiked: Bool
-    let isSaved: Bool
 }
 
 struct WallActionStateResponse: Decodable {

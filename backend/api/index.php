@@ -76,15 +76,15 @@ function route(string $method, string $path, array $CONFIG): void {
     if ($method === 'GET'  && $path === '/sync/state')    { require __DIR__ . '/routes/sync_state.php';   return; }
 
     if ($method === 'POST' && $path === '/meals')         { require __DIR__ . '/routes/meals.php';        return; }
-    if (preg_match('#^/meals/([0-9a-f-]{36})$#', $path, $m)) {
-        $GLOBALS['route_param_id'] = $m[1];
+    if (preg_match('#^/meals/([0-9a-f-]{36})$#i', $path, $m)) {
+        $GLOBALS['route_param_id'] = strtolower($m[1]);
         if ($method === 'DELETE') { require __DIR__ . '/routes/meals.php'; return; }
         if ($method === 'PATCH')  { require __DIR__ . '/routes/meals.php'; return; }
     }
 
     if ($method === 'POST' && $path === '/saved-foods')   { require __DIR__ . '/routes/saved_foods.php';  return; }
-    if (preg_match('#^/saved-foods/([0-9a-f-]{36})$#', $path, $m)) {
-        $GLOBALS['route_param_id'] = $m[1];
+    if (preg_match('#^/saved-foods/([0-9a-f-]{36})$#i', $path, $m)) {
+        $GLOBALS['route_param_id'] = strtolower($m[1]);
         if ($method === 'DELETE') { require __DIR__ . '/routes/saved_foods.php'; return; }
         if ($method === 'PATCH')  { require __DIR__ . '/routes/saved_foods.php'; return; }
     }
@@ -93,8 +93,8 @@ function route(string $method, string $path, array $CONFIG): void {
     if ($method === 'GET'  && $path === '/settings')      { require __DIR__ . '/routes/settings.php';     return; }
 
     if ($method === 'POST' && $path === '/photos')        { require __DIR__ . '/routes/photos.php';       return; }
-    if (preg_match('#^/photos/([0-9a-f-]{36})$#', $path, $m)) {
-        $GLOBALS['route_param_id'] = $m[1];
+    if (preg_match('#^/photos/([0-9a-f-]{36})$#i', $path, $m)) {
+        $GLOBALS['route_param_id'] = strtolower($m[1]);
         if ($method === 'GET')    { require __DIR__ . '/routes/photos.php'; return; }
         if ($method === 'DELETE') { require __DIR__ . '/routes/photos.php'; return; }
     }
@@ -102,17 +102,17 @@ function route(string $method, string $path, array $CONFIG): void {
     if ($path === '/wall/posts') {
         if ($method === 'GET' || $method === 'POST') { require __DIR__ . '/routes/wall.php'; return; }
     }
-    if (preg_match('#^/wall/posts/([0-9a-f-]{36})$#', $path, $m)) {
-        $GLOBALS['route_param_id'] = $m[1];
+    if (preg_match('#^/wall/posts/([0-9a-f-]{36})$#i', $path, $m)) {
+        $GLOBALS['route_param_id'] = strtolower($m[1]);
         if ($method === 'DELETE') { require __DIR__ . '/routes/wall.php'; return; }
     }
-    if (preg_match('#^/wall/posts/([0-9a-f-]{36})/(like|save|report|photo)$#', $path, $m)) {
-        $GLOBALS['route_param_id'] = $m[1];
-        $GLOBALS['route_action'] = $m[2];
+    if (preg_match('#^/wall/posts/([0-9a-f-]{36})/(like|report|photo)$#i', $path, $m)) {
+        $GLOBALS['route_param_id'] = strtolower($m[1]);
+        $GLOBALS['route_action'] = strtolower($m[2]);
         if (in_array($method, ['GET', 'POST', 'DELETE'], true)) { require __DIR__ . '/routes/wall.php'; return; }
     }
-    if (preg_match('#^/wall/users/([0-9a-f-]{36})/block$#', $path, $m)) {
-        $GLOBALS['route_param_id'] = $m[1];
+    if (preg_match('#^/wall/users/([0-9a-f-]{36})/block$#i', $path, $m)) {
+        $GLOBALS['route_param_id'] = strtolower($m[1]);
         $GLOBALS['route_action'] = 'block';
         if ($method === 'POST') { require __DIR__ . '/routes/wall.php'; return; }
     }

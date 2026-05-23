@@ -1,5 +1,5 @@
 -- Public Food Wall V1
--- Adds opt-in public meal posts, engagement, reports, and block relationships.
+-- Adds opt-in public meal posts, likes, reports, and block relationships.
 
 SET NAMES utf8mb4;
 
@@ -36,17 +36,6 @@ CREATE TABLE IF NOT EXISTS wall_post_likes (
   KEY idx_wall_likes_recent (created_at),
   CONSTRAINT fk_wall_likes_post FOREIGN KEY (post_id) REFERENCES public_wall_posts(id) ON DELETE CASCADE,
   CONSTRAINT fk_wall_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS wall_post_saves (
-  post_id         CHAR(36)        NOT NULL,
-  user_id         CHAR(36)        NOT NULL,
-  created_at      DATETIME        NOT NULL,
-  PRIMARY KEY (post_id, user_id),
-  KEY idx_wall_saves_user (user_id),
-  KEY idx_wall_saves_recent (created_at),
-  CONSTRAINT fk_wall_saves_post FOREIGN KEY (post_id) REFERENCES public_wall_posts(id) ON DELETE CASCADE,
-  CONSTRAINT fk_wall_saves_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS wall_post_reports (
