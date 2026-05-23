@@ -4,6 +4,36 @@ Running log of changes made to AI Calorie Coach. Newest entry on top. Each entry
 
 ---
 
+## 2026-05-23 — Stop showing "Analysis Failed: Failed to parse nutritional data"
+
+**Why:** Multiple App Store reviews complained that the camera analysis flow fails with the red "Analysis Failed — Analysis error: Failed to parse nutritional data" error. Root cause is in `OpenAIService.analyzeFood` + `CalorieEstimation.parse`:
+
+1. The primary model is `o3`, a reasoning model whose `max_output_tokens` budget is shared between reasoning tokens and the final structured output. With the previous `max_output_tokens: 16384` and no reasoning-effort cap, a non-trivial fraction of requests spend most of the budget on internal reasoning and the JSON body either comes back empty or truncated mid-array. The decoder then throws `parsingFailed`, which surfaces as "Failed to parse nutritional data".
+2. The decoder was strict — any deviation from the prompt (number returned as `"150"` string, missing `confidence`, `caloriesAvg` returned as `150.5`, unknown status value, prose around the JSON) tripped a hard decode failure.
+3. There was no fallback path if the model misbehaved, so the user just saw an error and a Try Again button that often produced the same failure on retry.
+
+### Changes
+- `CalorieCounter/Services/OpenAIService.swift`
+  - Added `OpenAIReasoningConfig` and wired `reasoning: { effort: "low" }` into the primary `o3` request. Reasoning effort `low` caps reasoning-token spend, which is what was eating the output budget. Also lowered `max_output_tokens` to 8192.
+  - Added a fallback path: if the primary `o3` call throws `emptyResponse` or `parsingFailed`, retry the same input against `gpt-4o-mini` (non-reasoning, vision-capable, and more reliable at emitting compact JSON). Network/auth/HTTP errors still propagate as-is.
+  - Replaced inline fence-stripping with `extractJSON(from:)`, which strips code fences and extracts the substring from the first `{` to the last `}` when the model wraps JSON in prose.
+- `CalorieCounter/Models/CalorieEstimation.swift`
+  - Custom top-level decoder: missing/null `foods`, `assumptions`, and total calorie fields no longer fail the whole decode; totals back-fill from per-food sums when omitted.
+  - Custom `EstimatedFood` decoder: `name` defaults to "Unknown food", `confidence` defaults to 0.7 when missing, and `LenientNumber` accepts numeric fields encoded as Int, Double, or String (including `"150 kcal"`, `"150-200"`, and `"~150"`).
+  - Lenient `EstimationStatus` decoder maps explicit "no food" signals to `.noFoodDetected`, and defaults to `.foodDetected` for unrecognized variants like `"detected"` or `"food_found"`.
+  - New `repairTruncatedJson` step in `parse(from:)` attempts to salvage partial JSON by dropping a trailing incomplete token and closing open brackets before a final decode attempt.
+
+### What this fixes
+- Drops the "Failed to parse nutritional data" rate by capping `o3` reasoning effort, accepting slightly off-spec JSON, repairing truncated JSON, and retrying with `gpt-4o-mini` on output-shape failures.
+- When the primary model produces unreadable output, the user should now see a fallback analysis instead of a red error screen.
+
+### Follow-ups for the user
+- Test the camera flow end-to-end on a real device before shipping.
+- If the proxy at `mfaizanshaikh.com/ai-calorie-coach/php-proxy/index.php` does model allow-listing, make sure `gpt-4o-mini` is on the list.
+- Watch App Store reviews after the next release lands; if "Analysis Failed" complaints persist, capture the underlying response and consider promoting `gpt-4o-mini` to primary.
+
+---
+
 ## 2026-05-23 — Fix wall likes and remove bookmarks
 
 **Why:** The wall like/bookmark requests were failing with `404 Not found` because iOS sends uppercase UUID path segments while the PHP router only matched lowercase UUIDs. The bookmark option is also no longer part of the wall product surface.
