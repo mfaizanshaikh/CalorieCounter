@@ -41,7 +41,7 @@ struct DataSyncDisclosureView: View {
                     Group {
                         sectionHeader("Third parties")
                         bullet("Apple / Google — only to verify it's you when signing in.")
-                        bullet("OpenAI — receives food photos you submit, to analyze nutrition. They don't store them beyond the request.")
+                        bullet("OpenAI — receives food photos and AI food search text you submit, to analyze nutrition or find food data. OpenAI handles API data according to its policies, including possible limited retention for service operation and abuse monitoring.")
                         bullet("Firebase / Google services may process analytics or technical data if Firebase Analytics remains enabled.")
                     }
 

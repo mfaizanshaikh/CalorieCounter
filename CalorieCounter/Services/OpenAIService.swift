@@ -298,7 +298,7 @@ actor OpenAIService {
         } else {
             // Use proxy — add identification headers (no API key sent)
             urlRequest.setValue(bundleID, forHTTPHeaderField: "X-Bundle-ID")
-            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
             urlRequest.setValue(deviceId, forHTTPHeaderField: "X-Device-ID")
         }
 

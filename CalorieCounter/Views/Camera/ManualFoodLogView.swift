@@ -14,6 +14,7 @@ struct ManualFoodLogView: View {
 
     @State private var showingSaveSuccess = false
     @State private var quantitySheetFood: FoodSearchResult?
+    @State private var showingAIDataDisclosure = false
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
@@ -58,6 +59,15 @@ struct ManualFoodLogView: View {
                 if showingSaveSuccess {
                     saveSuccessOverlay
                 }
+            }
+            .alert("Search with AI?", isPresented: $showingAIDataDisclosure) {
+                Button("Cancel", role: .cancel) {}
+                Button("Continue") {
+                    UserSettings.acceptAIDataDisclosure()
+                    Task { await viewModel.searchOnline() }
+                }
+            } message: {
+                Text("AI Calorie Coach sends your food search text to OpenAI, directly or through our proxy, to find nutrition data. You can keep using local results without searching online.")
             }
             .task {
                 viewModel.configure(with: modelContext)
@@ -161,7 +171,11 @@ struct ManualFoodLogView: View {
                 .padding(.vertical, 4)
         } else if !viewModel.hasSearchedOnline {
             Button {
-                Task { await viewModel.searchOnline() }
+                if UserSettings.hasAcceptedAIDataDisclosure {
+                    Task { await viewModel.searchOnline() }
+                } else {
+                    showingAIDataDisclosure = true
+                }
             } label: {
                 Label("Search Online with AI", systemImage: "sparkles")
                     .font(.subheadline)

@@ -98,6 +98,10 @@ Your OpenAI API key is not uploaded to our server. It is sent directly to OpenAI
 
 If you do not add your own OpenAI API key, the app may use our built-in proxy service for AI analysis and AI-powered food search. In that case, your food image, food search text, and analysis request may pass through our proxy before being sent to OpenAI. The proxy may receive technical identifiers such as bundle ID, device identifier, IP address, and request metadata for rate limiting, abuse prevention, debugging, and service operation.
 
+Before the app sends your first food photo or food search text for AI processing, it asks you to confirm that you want to continue. You can decline and use manual food logging or local food search results without sending a photo or search text to OpenAI.
+
+OpenAI may process and retain API inputs and outputs according to its API/platform data policies, including limited retention for service operation and abuse monitoring unless different settings, terms, or legal requirements apply.
+
 ### i) Analytics and App Usage Data
 
 The app includes Firebase Analytics. Firebase Analytics may automatically collect technical and usage information such as:
@@ -137,12 +141,14 @@ We share data only as needed to provide app functionality.
 
 Food photos and prompts may be sent to OpenAI for AI-powered nutrition analysis.
 
-If you use your own OpenAI API key, requests are sent directly from your device to OpenAI.
+Food search text may also be sent to OpenAI when you choose to use AI-powered online food search.
+
+If you use your own OpenAI API key, requests are sent directly from your device to OpenAI and are handled under your OpenAI account and OpenAI's applicable terms and policies.
 
 If you use the built-in service, requests may pass through our proxy before being sent to OpenAI.
 
-OpenAI's handling of API data is governed by OpenAI's policies:
-https://openai.com/policies/privacy-policy
+OpenAI's handling of API/platform data is governed by OpenAI's policies:
+https://openai.com/enterprise-privacy/
 
 ### Apple
 

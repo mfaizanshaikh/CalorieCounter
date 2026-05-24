@@ -5,10 +5,19 @@ class UserSettings: ObservableObject {
 
     // MARK: - Keychain Key
     private static let apiKeyKeychainKey = "openai_api_key"
+    static let aiDataDisclosureAcceptedKey = "ai_data_disclosure_accepted_v1"
 
     // Static accessor used by services
     static var openAIAPIKey: String {
         shared.apiKey
+    }
+
+    static var hasAcceptedAIDataDisclosure: Bool {
+        UserDefaults.standard.bool(forKey: aiDataDisclosureAcceptedKey)
+    }
+
+    static func acceptAIDataDisclosure() {
+        UserDefaults.standard.set(true, forKey: aiDataDisclosureAcceptedKey)
     }
 
     private let defaults = UserDefaults.standard

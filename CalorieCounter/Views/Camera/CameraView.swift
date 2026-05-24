@@ -8,6 +8,7 @@ struct CameraView: View {
     @State private var showingAnalysis = false
     @State private var showingError = false
     @State private var showingManualLog = false
+    @State private var showingAIDataDisclosure = false
     @Query private var entries: [MealEntry]
 
     init() {
@@ -90,6 +91,17 @@ struct CameraView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
+            .alert("Send Photo for AI Analysis?", isPresented: $showingAIDataDisclosure) {
+                Button("Cancel", role: .cancel) {}
+                Button("Continue") {
+                    UserSettings.acceptAIDataDisclosure()
+                    if let image = viewModel.capturedImage {
+                        startAnalysis(with: image)
+                    }
+                }
+            } message: {
+                Text("AI Calorie Coach sends the selected food photo to OpenAI, directly or through our proxy, to estimate nutrition. You can log food manually without sending a photo.")
+            }
         }
     }
 
@@ -114,9 +126,10 @@ struct CameraView: View {
                 .accessibilityLabel("Retake photo")
 
                 Button {
-                    showingAnalysis = true
-                    Task {
-                        await analysisViewModel.analyzeImage(image)
+                    if UserSettings.hasAcceptedAIDataDisclosure {
+                        startAnalysis(with: image)
+                    } else {
+                        showingAIDataDisclosure = true
                     }
                 } label: {
                     Label("Analyze", systemImage: "sparkles")
@@ -126,6 +139,13 @@ struct CameraView: View {
                 .tint(.green)
                 .accessibilityLabel("Analyze food for calories")
             }
+        }
+    }
+
+    private func startAnalysis(with image: UIImage) {
+        showingAnalysis = true
+        Task {
+            await analysisViewModel.analyzeImage(image)
         }
     }
 
